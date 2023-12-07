@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>org.folio</groupId>
+  <name>folio-flow-engine</name>
+  <artifactId>folio-flow-engine</artifactId>
+  <version>1.0.0-SNAPSHOT</version>
+
+  <properties>
+    <java.version>17</java.version>
+
+    <folio-backend-testing.version>1.0.0-SNAPSHOT</folio-backend-testing.version>
+    <lombok.version>1.18.20</lombok.version>
+    <commons-lang3.version>3.12.0</commons-lang3.version>
+    <log4j2-core.version>2.22.0</log4j2-core.version>
+
+    <maven-compiler-plugin.version>3.11.0</maven-compiler-plugin.version>
+    <maven-checkstyle-plugin.version>3.2.2</maven-checkstyle-plugin.version>
+    <folio-java-checkstyle.version>1.0.0-SNAPSHOT</folio-java-checkstyle.version>
+    <maven-surefire-plugin.version>3.1.0</maven-surefire-plugin.version>
+    <maven-resource-plugin.version>3.3.1</maven-resource-plugin.version>
+
+    <mockito-junit-jupiter.version>5.3.1</mockito-junit-jupiter.version>
+    <assertj-core.version>3.24.2</assertj-core.version>
+    <junit-jupiter.version>5.10.1</junit-jupiter.version>
+    <awaitility.version>4.2.0</awaitility.version>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-core</artifactId>
+      <version>${log4j2-core.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <version>${lombok.version}</version>
+      <optional>true</optional>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-lang3</artifactId>
+      <version>${commons-lang3.version}</version>
+    </dependency>
+
+    <!--    test dependencies-->
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-junit-jupiter</artifactId>
+      <version>${mockito-junit-jupiter.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-api</artifactId>
+      <version>${junit-jupiter.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-engine</artifactId>
+      <version>${junit-jupiter.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-params</artifactId>
+      <version>${junit-jupiter.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.assertj</groupId>
+      <artifactId>assertj-core</artifactId>
+      <version>${assertj-core.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.awaitility</groupId>
+      <artifactId>awaitility</artifactId>
+      <version>${awaitility.version}</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>${maven-compiler-plugin.version}</version>
+        <configuration>
+          <release>${java.version}</release>
+          <annotationProcessorPaths>
+            <path>
+              <groupId>org.projectlombok</groupId>
+              <artifactId>lombok</artifactId>
+              <version>${lombok.version}</version>
+            </path>
+          </annotationProcessorPaths>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-checkstyle-plugin</artifactId>
+        <version>${maven-checkstyle-plugin.version}</version>
+        <dependencies>
+          <dependency>
+            <groupId>com.puppycrawl.tools</groupId>
+            <artifactId>checkstyle</artifactId>
+            <version>10.11.0</version>
+          </dependency>
+          <dependency>
+            <groupId>org.folio</groupId>
+            <artifactId>folio-java-checkstyle</artifactId>
+            <version>${folio-java-checkstyle.version}</version>
+          </dependency>
+        </dependencies>
+        <executions>
+          <execution>
+            <id>verify-style</id>
+            <phase>process-classes</phase>
+            <goals>
+              <goal>check</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <sourceDirectories>
+            <sourceDirectory>${project.build.sourceDirectory}</sourceDirectory>
+            <sourceDirectory>${project.build.testSourceDirectory}</sourceDirectory>
+          </sourceDirectories>
+          <failsOnError>true</failsOnError>
+          <violationSeverity>warning</violationSeverity>
+          <failOnViolation>true</failOnViolation>
+          <logViolationsToConsole>true</logViolationsToConsole>
+          <configLocation>folio-checkstyle/checkstyle.xml</configLocation>
+          <cacheFile>${project.build.directory}/cachefile</cacheFile>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>${maven-surefire-plugin.version}</version>
+        <configuration>
+          <useSystemClassLoader>false</useSystemClassLoader>
+          <groups>unit</groups>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-resources-plugin</artifactId>
+        <version>${maven-resource-plugin.version}</version>
+      </plugin>
+
+    </plugins>
+  </build>
+
+  <repositories>
+    <repository>
+      <id>folio-nexus</id>
+      <name>FOLIO Maven repository</name>
+      <url>https://repository.folio.org/repository/maven-folio</url>
+    </repository>
+
+    <repository>
+      <id>index-data-nexus</id>
+      <name>FOLIO Maven repository</name>
+      <url>https://maven.indexdata.com</url>
+    </repository>
+  </repositories>
+</project>
