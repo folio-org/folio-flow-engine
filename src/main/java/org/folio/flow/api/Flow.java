@@ -49,6 +49,11 @@ public final class Flow implements Stage {
   private final List<StageExecutor> stages;
 
   /**
+   * Stage to be executed if flow is ignored.
+   */
+  private final StageExecutor onFlowSkipFinalStage;
+
+  /**
    * Stage to be executed if flow is finished with {@link org.folio.flow.exception.FlowExecutionException}.
    */
   private final StageExecutor onFlowErrorFinalStage;
@@ -98,6 +103,8 @@ public final class Flow implements Stage {
     private FlowExecutionStrategy flowExecutionStrategy;
 
     private List<StageExecutor> stageExecutors;
+
+    private StageExecutor onFlowSkipFinalStage;
     private StageExecutor onFlowErrorFinalStage;
     private StageExecutor onFlowCancellationFinalStage;
     private StageExecutor onFlowCancellationErrorFinalStage;
@@ -260,6 +267,29 @@ public final class Flow implements Stage {
     }
 
     /**
+     * Adds a {@link Stage} that will be executed only if flow is skipped.
+     *
+     * @param stage - a {@link Stage} to execute if flow is skipped
+     * @return reference to the current {@link FlowBuilder} object
+     */
+    public FlowBuilder onFlowSkip(Stage stage) {
+      requireNonNull(stage, "onFlowSkipError stage must not be null");
+      this.onFlowSkipFinalStage = getStageExecutor(stage);
+      return this;
+    }
+
+    /**
+     * Adds a {@link Stage} that will be executed only if flow is skipped.
+     *
+     * @param stage - a {@link Stage} to execute if flow is skipped
+     * @return reference to the current {@link FlowBuilder} object
+     */
+    public FlowBuilder onFlowSkip(StageExecutor stage) {
+      this.onFlowSkipFinalStage = requireNonNull(stage, "onFlowSkip stage must not be null");
+      return this;
+    }
+
+    /**
      * Creates a {@link Flow} object from builder.
      *
      * @return immutable {@link Flow} object
@@ -270,6 +300,7 @@ public final class Flow implements Stage {
         Map.copyOf(defaultIfNull(this.flowParameters, emptyMap())),
         defaultIfNull(this.flowExecutionStrategy, CANCEL_ON_ERROR),
         List.copyOf(emptyIfNull(this.stageExecutors)),
+        onFlowSkipFinalStage,
         onFlowErrorFinalStage,
         onFlowCancellationFinalStage,
         onFlowCancellationErrorFinalStage);

@@ -93,7 +93,8 @@ public class FlowExecutor implements StageExecutor {
         .thenApply(ser -> skippedStagesDeque.addLast(ser, stageExecutor, false));
     }
 
-    return future.thenApply(ser -> createSkippedFlowResult(ser, upstreamResult.getFlowId(), skippedStagesDeque));
+    return future
+      .thenCompose(ser -> createSkippedFlowResult(ser, executor, upstreamResult.getFlowId(), skippedStagesDeque));
   }
 
   @Override
@@ -189,11 +190,17 @@ public class FlowExecutor implements StageExecutor {
     };
   }
 
-  private StageExecutionResult createSkippedFlowResult(StageExecutionResult ser, String parentFlowId,
-    ExecutionDeque d) {
+  private CompletableFuture<StageExecutionResult> createSkippedFlowResult(StageExecutionResult ser, Executor executor,
+    String parentFlowId, ExecutionDeque deque) {
     var stageContext = ser.getContext().withFlowId(parentFlowId);
     log.debug("[{}] Flow is skipped", getStageId());
-    return stageResult(getStageId(), stageContext, SKIPPED, null, d.getExecutedStagesAsList());
+    var onFlowSkipFinalStage = flow.getOnFlowSkipFinalStage();
+    if (onFlowSkipFinalStage == null) {
+      return completedFuture(stageResult(getStageId(), stageContext, SKIPPED, null, deque.getExecutedStagesAsList()));
+    }
+
+    return getFinalStageExecutionFuture(onFlowSkipFinalStage, executor, ser, deque)
+      .thenApply(result -> stageResult(getStageId(), stageContext, SKIPPED, null, deque.getExecutedStagesAsList()));
   }
 
   private StageExecutionResult createCancelledFlowResult(StageExecutionResult upstreamResult, StageExecutionResult ser,
