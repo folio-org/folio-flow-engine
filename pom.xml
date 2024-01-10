@@ -8,6 +8,13 @@
   <artifactId>folio-flow-engine</artifactId>
   <version>1.0.0-SNAPSHOT</version>
 
+  <licenses>
+    <license>
+      <name>Apache License 2.0</name>
+      <url>https://spdx.org/licenses/Apache-2.0</url>
+    </license>
+  </licenses>
+
   <properties>
     <java.version>17</java.version>
 
@@ -181,4 +188,21 @@
       <url>https://maven.indexdata.com</url>
     </repository>
   </repositories>
+
+  <distributionManagement>
+    <repository>
+      <id>folio-nexus</id>
+      <name>FOLIO Release Repository</name>
+      <url>https://repository.folio.org/repository/maven-releases/</url>
+      <uniqueVersion>false</uniqueVersion>
+      <layout>default</layout>
+    </repository>
+    <snapshotRepository>
+      <id>folio-nexus</id>
+      <name>FOLIO Snapshot Repository</name>
+      <uniqueVersion>true</uniqueVersion>
+      <url>https://repository.folio.org/repository/maven-snapshots/</url>
+      <layout>default</layout>
+    </snapshotRepository>
+  </distributionManagement>
 </project>
