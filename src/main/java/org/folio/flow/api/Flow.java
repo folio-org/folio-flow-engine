@@ -95,7 +95,6 @@ public final class Flow implements Stage {
   /**
    * Builder for {@link Flow} object.
    */
-  @Data
   public static class FlowBuilder {
 
     private String id;

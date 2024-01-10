@@ -1,5 +1,6 @@
 package org.folio.flow.api;
 
+import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -338,6 +339,46 @@ class FlowTest {
 
     @ParameterizedTest(name = PARAMETERIZED_TEST_NAME)
     @MethodSource("org.folio.flow.utils.FlowTestUtils#flowEnginesDataSource")
+    void execute_negative_flowCancellationFailedAndStageExecutorCalled(FlowEngine flowEngine) {
+      var onSubFlowCancellationError = mock(StageExecutor.class, "onSubFlowCancellationErrorStageExecutor");
+      when(onSubFlowCancellationError.execute(any(), any())).thenAnswer(inv -> {
+        var ser = inv.<StageExecutionResult>getArgument(0);
+        var stageId = "onSubFlowCancellationErrorStageExecutor";
+        var sr = StageExecutionResult.stageResult(stageId, ser.getContext(), SUCCESS, null, emptyList());
+        return completedFuture(sr);
+      });
+
+      mockStageNames(cancellableStage);
+
+      var exception = new RuntimeException("stage error");
+      var cancellationException = new RuntimeException("cancellation error");
+      doThrow(exception).when(cancellableStage).execute(any());
+      doThrow(cancellationException).when(cancellableStage).cancel(any());
+      when(cancellableStage.shouldCancelIfFailed(any())).thenReturn(true);
+
+      var flow = Flow.builder()
+        .id("main")
+        .stage(cancellableStage)
+        .onFlowCancellationError(onSubFlowCancellationError)
+        .build();
+
+      assertThatThrownBy(() -> executeFlow(flow, flowEngine))
+        .isInstanceOf(FlowCancellationException.class)
+        .hasMessage("Failed to cancel flow %s. Stage '%s' failed and [%s] not cancelled", flow, cancellableStage,
+          cancellableStage)
+        .hasCause(cancellationException)
+        .extracting(FlowTestUtils::stageResults, list(StageResult.class))
+        .containsExactly(
+          stageResult(flow, cancellableStage, CANCELLATION_FAILED, exception),
+          stageResult(flow, "onSubFlowCancellationErrorStageExecutor", SUCCESS));
+
+      verify(cancellableStage).execute(stageContext(flow));
+      verify(cancellableStage).cancel(stageContext(flow));
+      verify(onSubFlowCancellationError).execute(any(StageExecutionResult.class), any(Executor.class));
+    }
+
+    @ParameterizedTest(name = PARAMETERIZED_TEST_NAME)
+    @MethodSource("org.folio.flow.utils.FlowTestUtils#flowEnginesDataSource")
     void execute_negative_finalStagesNotCalledOnCancellationFail(FlowEngine flowEngine) {
       mockStageNames(cancellableStage, simpleStage);
 
@@ -492,6 +533,39 @@ class FlowTest {
       verify(simpleStage).execute(stageContext(flow));
       verify(skipStage1).execute(stageContext(subFlow1));
     }
+
+    @ParameterizedTest(name = PARAMETERIZED_TEST_NAME)
+    @MethodSource("org.folio.flow.utils.FlowTestUtils#flowEnginesDataSource")
+    void execute_positive_onFlowSkipStageExecutorIsCalled(FlowEngine flowEngine) {
+      var skipStageExecutor = mock(StageExecutor.class, "skipStageExecutor");
+      when(skipStageExecutor.execute(any(), any())).thenAnswer(inv -> {
+        var ser = inv.<StageExecutionResult>getArgument(0);
+        var sr = StageExecutionResult.stageResult("skipStageExecutor", ser.getContext(), SUCCESS, null, emptyList());
+        return completedFuture(sr);
+      });
+
+      mockStageNames(simpleStage, cancellableStage1);
+
+      var subFlow1 = Flow.builder().id("main/sub").stage(cancellableStage1).onFlowSkip(skipStageExecutor).build();
+      var flow = flowForStageSequence("main", simpleStage, subFlow1);
+
+      var exception = new RuntimeException("stage error");
+      doThrow(exception).when(simpleStage).execute(any());
+
+      assertThatThrownBy(() -> executeFlow(flow, flowEngine))
+        .isInstanceOf(FlowCancelledException.class)
+        .hasMessage("Flow %s is cancelled, stage '%s' failed", flow, simpleStage)
+        .hasCause(exception)
+        .extracting(FlowTestUtils::stageResults, list(StageResult.class))
+        .containsExactly(
+          stageResult(flow, simpleStage, FAILED, exception),
+          stageResult(flow, subFlow1, SKIPPED, List.of(
+            stageResult(subFlow1, cancellableStage1, SKIPPED),
+            stageResult(subFlow1, "skipStageExecutor", SUCCESS))));
+
+      verify(simpleStage).execute(stageContext(flow));
+      verify(skipStageExecutor).execute(any(StageExecutionResult.class), any(Executor.class));
+    }
   }
 
   @Nested
@@ -617,10 +691,10 @@ class FlowTest {
     @ParameterizedTest(name = PARAMETERIZED_TEST_NAME)
     @MethodSource("org.folio.flow.utils.FlowTestUtils#flowEnginesDataSource")
     void execute_positive_onFlowSkipStageIsCalled(FlowEngine flowEngine) {
-      var skipStage1 = mock(Stage.class, "skipStage1");
-      mockStageNames(skipStage1, simpleStage, cancellableStage1);
+      var skipStage = mock(Stage.class, "skipStage");
+      mockStageNames(skipStage, simpleStage, cancellableStage1);
 
-      var subFlow1 = Flow.builder().id("main/sub1").stage(cancellableStage1).onFlowSkip(skipStage1).build();
+      var subFlow1 = Flow.builder().id("main/sub").stage(cancellableStage1).onFlowSkip(skipStage).build();
       var flow = flowForStageSequence("main", IGNORE_ON_ERROR, simpleStage, subFlow1);
 
       var exception = new RuntimeException("stage error");
@@ -635,10 +709,43 @@ class FlowTest {
           stageResult(flow, simpleStage, FAILED, exception),
           stageResult(flow, subFlow1, SKIPPED, List.of(
             stageResult(subFlow1, cancellableStage1, SKIPPED),
-            stageResult(subFlow1, skipStage1, SUCCESS))));
+            stageResult(subFlow1, skipStage, SUCCESS))));
 
       verify(simpleStage).execute(stageContext(flow));
-      verify(skipStage1).execute(stageContext(subFlow1));
+      verify(skipStage).execute(stageContext(subFlow1));
+    }
+
+    @ParameterizedTest(name = PARAMETERIZED_TEST_NAME)
+    @MethodSource("org.folio.flow.utils.FlowTestUtils#flowEnginesDataSource")
+    void execute_positive_onFlowSkipStageExecutorIsCalled(FlowEngine flowEngine) {
+      var skipStageExecutor = mock(StageExecutor.class, "skipStageExecutor");
+      when(skipStageExecutor.execute(any(), any())).thenAnswer(inv -> {
+        var ser = inv.<StageExecutionResult>getArgument(0);
+        var sr = StageExecutionResult.stageResult("skipStageExecutor", ser.getContext(), SUCCESS, null, emptyList());
+        return completedFuture(sr);
+      });
+
+      mockStageNames(simpleStage, cancellableStage1);
+
+      var subFlow1 = Flow.builder().id("main/sub").stage(cancellableStage1).onFlowSkip(skipStageExecutor).build();
+      var flow = flowForStageSequence("main", IGNORE_ON_ERROR, simpleStage, subFlow1);
+
+      var exception = new RuntimeException("stage error");
+      doThrow(exception).when(simpleStage).execute(any());
+
+      assertThatThrownBy(() -> executeFlow(flow, flowEngine))
+        .isInstanceOf(FlowExecutionException.class)
+        .hasMessage("Failed to execute flow %s, stage '%s' failed", flow, simpleStage)
+        .hasCause(exception)
+        .extracting(FlowTestUtils::stageResults, list(StageResult.class))
+        .containsExactly(
+          stageResult(flow, simpleStage, FAILED, exception),
+          stageResult(flow, subFlow1, SKIPPED, List.of(
+            stageResult(subFlow1, cancellableStage1, SKIPPED),
+            stageResult(subFlow1, "skipStageExecutor", SUCCESS))));
+
+      verify(simpleStage).execute(stageContext(flow));
+      verify(skipStageExecutor).execute(any(StageExecutionResult.class), any(Executor.class));
     }
   }
 }
