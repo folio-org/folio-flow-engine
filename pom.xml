@@ -18,7 +18,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <java.version>17</java.version>
     <folio-backend-testing.version>1.0.0</folio-backend-testing.version>
-    <lombok.version>1.18.30</lombok.version>
+    <lombok.version>1.18.32</lombok.version>
     <commons-lang3.version>3.14.0</commons-lang3.version>
     <log4j2-core.version>2.23.1</log4j2-core.version>
 
