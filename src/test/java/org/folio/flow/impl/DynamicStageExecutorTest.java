@@ -39,8 +39,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class DynamicStageExecutorTest {
 
-  @Mock private Stage simpleStage;
-  @Mock private Stage simpleStage2;
+  @Mock private Stage<StageContext> simpleStage;
+  @Mock private Stage<StageContext> simpleStage2;
   @Mock private CancellableTestStage cancellableStage;
 
   @AfterEach

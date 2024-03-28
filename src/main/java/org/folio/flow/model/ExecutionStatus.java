@@ -2,8 +2,6 @@ package org.folio.flow.model;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import org.folio.flow.api.Cancellable;
-import org.folio.flow.api.StageContext;
 import org.folio.flow.impl.StageExecutor;
 
 @Getter
@@ -40,7 +38,7 @@ public enum ExecutionStatus {
 
   /**
    * Indicates that {@link org.folio.flow.api.Stage} or {@link StageExecutor} was cancelled after cancellation signal,
-   * stage must implement {@link Cancellable} interface to be able to cancel work.
+   * stage must implement cancel() method of {@link org.folio.flow.api.Stage} interface to be able to cancel work.
    *
    * <p>
    * {@link FlowExecutionStrategy} must be set to {@link FlowExecutionStrategy#CANCEL_ON_ERROR}.
@@ -56,7 +54,7 @@ public enum ExecutionStatus {
 
   /**
    * Indicates that {@link org.folio.flow.api.Stage} or {@link StageExecutor} cancellation was failed due to exception
-   * in {@link Cancellable#cancel(StageContext)} method.
+   * in cancel() method of {@link org.folio.flow.api.Stage} interface method.
    *
    * <p>
    * {@link FlowExecutionStrategy} must be set to {@link FlowExecutionStrategy#CANCEL_ON_ERROR}.
@@ -66,7 +64,7 @@ public enum ExecutionStatus {
 
   /**
    * Indicates that{@link org.folio.flow.api.Stage} or {@link StageExecutor} cancellation was ignored because it does
-   * not implement {@link Cancellable} interface.
+   * not implement cancel() method of {@link org.folio.flow.api.Stage} interface.
    *
    * <p>
    * {@link FlowExecutionStrategy} must be set to {@link FlowExecutionStrategy#CANCEL_ON_ERROR}.

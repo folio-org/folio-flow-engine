@@ -24,8 +24,13 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import org.folio.flow.api.models.CancellableTestStage;
+import org.folio.flow.api.models.CustomSimpleStage;
 import org.folio.flow.api.models.RecoverableAndCancellableTestStage;
 import org.folio.flow.api.models.RecoverableTestStage;
+import org.folio.flow.api.models.SimpleNonGenericStage;
+import org.folio.flow.api.models.SimpleStage;
+import org.folio.flow.api.models.StageWithInheritance;
+import org.folio.flow.api.models.TestStageContextWrapper;
 import org.folio.flow.exception.FlowCancellationException;
 import org.folio.flow.exception.FlowCancelledException;
 import org.folio.flow.exception.FlowExecutionException;
@@ -45,16 +50,21 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 public class SingleStageFlowTest {
 
-  @Mock private Stage simpleStage;
-  @Mock private Stage onFlowErrorStage;
-  @Mock private Stage onFlowCancelledStage;
+  @Mock private SimpleStage simpleStage;
+  @Mock private SimpleStage onFlowErrorStage;
+  @Mock private SimpleStage onFlowCancelledStage;
   @Mock private CancellableTestStage cancellableStage;
   @Mock private RecoverableTestStage recoverableStage;
   @Mock private RecoverableAndCancellableTestStage rcStage;
 
+  @Mock private CustomSimpleStage customSimpleStage;
+  @Mock private SimpleNonGenericStage simpleNonGenericStage;
+  @Mock private StageWithInheritance customStageWithInheritance;
+
   @AfterEach
   void tearDown() {
-    verifyNoMoreInteractions(simpleStage, recoverableStage, cancellableStage, rcStage);
+    verifyNoMoreInteractions(simpleStage, recoverableStage, cancellableStage, rcStage,
+      simpleNonGenericStage, customStageWithInheritance);
   }
 
   @Nested
@@ -70,6 +80,53 @@ public class SingleStageFlowTest {
       executeFlow(flow, flowEngine);
 
       verify(simpleStage).execute(stageContext(flow));
+      assertThat(flowEngine.getFlowStatus(flow)).isEqualTo(SUCCESS);
+    }
+
+    @ParameterizedTest(name = PARAMETERIZED_TEST_NAME)
+    @MethodSource("org.folio.flow.utils.FlowTestUtils#flowEnginesDataSource")
+    void execute_positive_lambdaStage(FlowEngine flowEngine) {
+      var stage = (Stage<StageContext>) ctx -> {};
+      var flow = flowForStageSequence(stage);
+
+      executeFlow(flow, flowEngine);
+
+      assertThat(flowEngine.getFlowStatus(flow)).isEqualTo(SUCCESS);
+    }
+
+    @ParameterizedTest(name = PARAMETERIZED_TEST_NAME)
+    @MethodSource("org.folio.flow.utils.FlowTestUtils#flowEnginesDataSource")
+    void execute_positive_simpleNonGenericStage(FlowEngine flowEngine) {
+      mockStageNames(simpleNonGenericStage);
+      var flow = flowForStageSequence(simpleNonGenericStage);
+
+      executeFlow(flow, flowEngine);
+
+      verify(simpleNonGenericStage).execute(stageContext(flow));
+      assertThat(flowEngine.getFlowStatus(flow)).isEqualTo(SUCCESS);
+    }
+
+    @ParameterizedTest(name = PARAMETERIZED_TEST_NAME)
+    @MethodSource("org.folio.flow.utils.FlowTestUtils#flowEnginesDataSource")
+    void execute_positive_customSingleStage(FlowEngine flowEngine) {
+      mockStageNames(customSimpleStage);
+      var flow = flowForStageSequence(customSimpleStage);
+
+      executeFlow(flow, flowEngine);
+
+      verify(customSimpleStage).execute(new TestStageContextWrapper(stageContext(flow)));
+      assertThat(flowEngine.getFlowStatus(flow)).isEqualTo(SUCCESS);
+    }
+
+    @ParameterizedTest(name = PARAMETERIZED_TEST_NAME)
+    @MethodSource("org.folio.flow.utils.FlowTestUtils#flowEnginesDataSource")
+    void execute_positive_customSingleStageWithInheritance(FlowEngine flowEngine) {
+      mockStageNames(customStageWithInheritance);
+      var flow = flowForStageSequence(customStageWithInheritance);
+
+      executeFlow(flow, flowEngine);
+
+      verify(customStageWithInheritance).execute(new TestStageContextWrapper(stageContext(flow)));
       assertThat(flowEngine.getFlowStatus(flow)).isEqualTo(SUCCESS);
     }
 

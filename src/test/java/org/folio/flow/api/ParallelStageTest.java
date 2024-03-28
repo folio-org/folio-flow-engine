@@ -15,7 +15,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+import java.util.List;
 import java.util.concurrent.Executor;
+import org.folio.flow.api.models.CustomSimpleStage;
 import org.folio.flow.impl.StageExecutor;
 import org.folio.flow.model.StageExecutionResult;
 import org.folio.flow.support.UnitTest;
@@ -28,6 +30,47 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class ParallelStageTest {
 
   @Test
+  void builder_customStage() {
+    var build = parallelStageBuilder()
+      .stage(new CustomSimpleStage())
+      .stages(List.of(new CustomSimpleStage()))
+      .build();
+
+    assertThat(build).isNotNull();
+  }
+
+  @Test
+  void of_listOfCustomStage() {
+    var build = ParallelStage.of(List.of(new CustomSimpleStage()));
+    assertThat(build).isNotNull();
+  }
+
+  @Test
+  void of_listOfFlows() {
+    var flows = List.of(Flow.builder().build());
+    var build = ParallelStage.of(flows);
+    assertThat(build).isNotNull();
+  }
+
+  @Test
+  void of_listOfCustomStageWithId() {
+    var build = ParallelStage.of("test-stage", List.of(new CustomSimpleStage()));
+    assertThat(build).isNotNull();
+  }
+
+  @Test
+  void of_arrayOfCustomStage() {
+    var build = ParallelStage.of(new CustomSimpleStage());
+    assertThat(build).isNotNull();
+  }
+
+  @Test
+  void builder_arrayOfCustomStageWithId() {
+    var build = ParallelStage.of("test-stage", new CustomSimpleStage());
+    assertThat(build).isNotNull();
+  }
+
+  @Test
   void builder_negative_idIsNull() {
     var builder = parallelStageBuilder();
     assertThatThrownBy(() -> builder.id(null))
@@ -38,7 +81,7 @@ class ParallelStageTest {
   @Test
   void builder_negative_stageIsNull() {
     var builder = parallelStageBuilder();
-    assertThatThrownBy(() -> builder.stage((Stage) null))
+    assertThatThrownBy(() -> builder.stage((Stage<StageContext>) null))
       .isInstanceOf(IllegalArgumentException.class)
       .hasMessage("Stage must not be null");
   }

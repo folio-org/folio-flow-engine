@@ -59,7 +59,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class FlowTest {
 
-  @Mock private Stage simpleStage;
+  @Mock private Stage<StageContext> simpleStage;
+  @Mock private Stage<StageContext> onFlowSkipStage;
+  @Mock private Stage<StageContext> onFlowCancellationErrorStage;
+  @Mock private Stage<StageContext> onSubFlowCancellationErrorStage;
+
   @Mock private RecoverableTestStage recoverableStage;
   @Mock private CancellableTestStage cancellableStage;
   @Mock private CancellableTestStage cancellableStage1;
@@ -68,8 +72,9 @@ class FlowTest {
 
   @AfterEach
   void tearDown() {
-    verifyNoMoreInteractions(simpleStage, recoverableStage,
-      cancellableStage, cancellableStage1, cancellableStage2, rcStage);
+    verifyNoMoreInteractions(simpleStage,
+      onFlowSkipStage, onFlowCancellationErrorStage, onSubFlowCancellationErrorStage,
+      recoverableStage, cancellableStage, cancellableStage1, cancellableStage2, rcStage);
   }
 
   @Nested
@@ -87,7 +92,7 @@ class FlowTest {
     @Test
     void builder_negative_stageIsNull() {
       var builder = builder();
-      assertThatThrownBy(() -> builder.stage((Stage) null))
+      assertThatThrownBy(() -> builder.stage((Stage<StageContext>) null))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Stage must not be null");
     }
@@ -300,9 +305,7 @@ class FlowTest {
     @ParameterizedTest(name = PARAMETERIZED_TEST_NAME)
     @MethodSource("org.folio.flow.utils.FlowTestUtils#flowEnginesDataSource")
     void execute_negative_flowOfSingleStageCancellationFailed(FlowEngine flowEngine) {
-      var onSubFlowCancellationError = mock(Stage.class, "onSubFlowCancellationError");
-      var onFlowCancellationError = mock(Stage.class, "onFlowCancellationError");
-      mockStageNames(cancellableStage, onSubFlowCancellationError, onFlowCancellationError);
+      mockStageNames(cancellableStage, onSubFlowCancellationErrorStage, onFlowCancellationErrorStage);
 
       var exception = new RuntimeException("stage error");
       var cancellationException = new RuntimeException("cancellation error");
@@ -313,10 +316,10 @@ class FlowTest {
       var subFlow = Flow.builder()
         .id("main/sub")
         .stage(cancellableStage)
-        .onFlowCancellationError(onSubFlowCancellationError)
+        .onFlowCancellationError(onSubFlowCancellationErrorStage)
         .build();
 
-      var flow = Flow.builder().id("main").stage(subFlow).onFlowCancellationError(onFlowCancellationError).build();
+      var flow = Flow.builder().id("main").stage(subFlow).onFlowCancellationError(onFlowCancellationErrorStage).build();
 
       assertThatThrownBy(() -> executeFlow(flow, flowEngine))
         .isInstanceOf(FlowCancellationException.class)
@@ -326,15 +329,14 @@ class FlowTest {
         .containsExactly(
           stageResult(flow, subFlow, CANCELLATION_FAILED, exception, List.of(
             stageResult(subFlow, cancellableStage, CANCELLATION_FAILED, exception),
-            stageResult(subFlow, onSubFlowCancellationError, SUCCESS))),
-          stageResult(flow, onFlowCancellationError, SUCCESS));
+            stageResult(subFlow, onSubFlowCancellationErrorStage, SUCCESS))),
+          stageResult(flow, onFlowCancellationErrorStage, SUCCESS));
 
-      verify(onFlowCancellationError).execute(stageContext(flow));
+      verify(onFlowCancellationErrorStage).execute(stageContext(flow));
       var expectedSubflowContext = stageContext(subFlow);
       verify(cancellableStage).execute(expectedSubflowContext);
       verify(cancellableStage).shouldCancelIfFailed(expectedSubflowContext);
-      verify(onSubFlowCancellationError).execute(expectedSubflowContext);
-      verifyNoMoreInteractions(onSubFlowCancellationError, onFlowCancellationError);
+      verify(onSubFlowCancellationErrorStage).execute(expectedSubflowContext);
     }
 
     @ParameterizedTest(name = PARAMETERIZED_TEST_NAME)
@@ -509,10 +511,9 @@ class FlowTest {
     @ParameterizedTest(name = PARAMETERIZED_TEST_NAME)
     @MethodSource("org.folio.flow.utils.FlowTestUtils#flowEnginesDataSource")
     void execute_positive_onFlowSkipStageIsCalled(FlowEngine flowEngine) {
-      var skipStage1 = mock(Stage.class, "skipStage1");
-      mockStageNames(skipStage1, simpleStage, cancellableStage1);
+      mockStageNames(onFlowSkipStage, simpleStage, cancellableStage1);
 
-      var subFlow1 = Flow.builder().id("main/sub1").stage(cancellableStage1).onFlowSkip(skipStage1).build();
+      var subFlow1 = Flow.builder().id("main/sub1").stage(cancellableStage1).onFlowSkip(onFlowSkipStage).build();
 
       var flow = flowForStageSequence("main", simpleStage, subFlow1);
 
@@ -528,10 +529,10 @@ class FlowTest {
           stageResult(flow, simpleStage, FAILED, exception),
           stageResult(flow, subFlow1, SKIPPED, List.of(
             stageResult(subFlow1, cancellableStage1, SKIPPED),
-            stageResult(subFlow1, skipStage1, SUCCESS))));
+            stageResult(subFlow1, onFlowSkipStage, SUCCESS))));
 
       verify(simpleStage).execute(stageContext(flow));
-      verify(skipStage1).execute(stageContext(subFlow1));
+      verify(onFlowSkipStage).execute(stageContext(subFlow1));
     }
 
     @ParameterizedTest(name = PARAMETERIZED_TEST_NAME)
@@ -691,10 +692,9 @@ class FlowTest {
     @ParameterizedTest(name = PARAMETERIZED_TEST_NAME)
     @MethodSource("org.folio.flow.utils.FlowTestUtils#flowEnginesDataSource")
     void execute_positive_onFlowSkipStageIsCalled(FlowEngine flowEngine) {
-      var skipStage = mock(Stage.class, "skipStage");
-      mockStageNames(skipStage, simpleStage, cancellableStage1);
+      mockStageNames(onFlowSkipStage, simpleStage, cancellableStage1);
 
-      var subFlow1 = Flow.builder().id("main/sub").stage(cancellableStage1).onFlowSkip(skipStage).build();
+      var subFlow1 = Flow.builder().id("main/sub").stage(cancellableStage1).onFlowSkip(onFlowSkipStage).build();
       var flow = flowForStageSequence("main", IGNORE_ON_ERROR, simpleStage, subFlow1);
 
       var exception = new RuntimeException("stage error");
@@ -709,10 +709,10 @@ class FlowTest {
           stageResult(flow, simpleStage, FAILED, exception),
           stageResult(flow, subFlow1, SKIPPED, List.of(
             stageResult(subFlow1, cancellableStage1, SKIPPED),
-            stageResult(subFlow1, skipStage, SUCCESS))));
+            stageResult(subFlow1, onFlowSkipStage, SUCCESS))));
 
       verify(simpleStage).execute(stageContext(flow));
-      verify(skipStage).execute(stageContext(subFlow1));
+      verify(onFlowSkipStage).execute(stageContext(subFlow1));
     }
 
     @ParameterizedTest(name = PARAMETERIZED_TEST_NAME)

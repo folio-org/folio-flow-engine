@@ -7,6 +7,7 @@ import org.folio.flow.impl.StageExecutor;
 
 @Data
 @RequiredArgsConstructor
+@SuppressWarnings("ClassCanBeRecord")
 public final class StageResultHolder {
 
   private final StageExecutionResult result;

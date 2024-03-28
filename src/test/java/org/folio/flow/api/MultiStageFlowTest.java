@@ -20,7 +20,6 @@ import static org.folio.flow.utils.FlowTestUtils.stageContext;
 import static org.folio.flow.utils.FlowTestUtils.stageResult;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -48,14 +47,15 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 public class MultiStageFlowTest {
 
-  @Mock private Stage simpleStage;
+  @Mock private Stage<StageContext> simpleStage;
+  @Mock private Stage<StageContext> onFlowCancellationError;
   @Mock private CancellableTestStage cancellableStage;
   @Mock private RecoverableTestStage recoverableStage;
   @Mock private RecoverableAndCancellableTestStage rcStage;
 
   @AfterEach
   void tearDown() {
-    verifyNoMoreInteractions(simpleStage, recoverableStage, cancellableStage, rcStage);
+    verifyNoMoreInteractions(simpleStage, onFlowCancellationError, recoverableStage, cancellableStage, rcStage);
   }
 
   @Nested
@@ -254,7 +254,6 @@ public class MultiStageFlowTest {
     @ParameterizedTest(name = PARAMETERIZED_TEST_NAME)
     @MethodSource("org.folio.flow.utils.FlowTestUtils#flowEnginesDataSource")
     void execute_negative_flowCancellationStageFailedWithTerminalStages(FlowEngine flowEngine) {
-      var onFlowCancellationError = mock(Stage.class, "onFlowCancellationError");
       mockStageNames(simpleStage, onFlowCancellationError, cancellableStage, rcStage);
 
       var exception = new RuntimeException("error");
@@ -327,7 +326,6 @@ public class MultiStageFlowTest {
     @ParameterizedTest(name = PARAMETERIZED_TEST_NAME)
     @MethodSource("org.folio.flow.utils.FlowTestUtils#flowEnginesDataSource")
     void execute_negative_flowOnCancellationStageIsNotCalledWhenCancellationFailed(FlowEngine flowEngine) {
-      var onFlowCancellationError = mock(Stage.class, "onFlowCancellationError");
       var exception = new RuntimeException("error");
       doThrow(exception).when(rcStage).execute(any());
       doThrow(exception).when(rcStage).recover(any());

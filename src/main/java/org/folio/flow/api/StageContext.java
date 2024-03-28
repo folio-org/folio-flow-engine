@@ -42,6 +42,14 @@ public interface StageContext {
   StageContext put(Object key, Object obj);
 
   /**
+   * Remove value by key from the context.
+   *
+   * @param key - key as {@link Object} to put value to the context data holder
+   * @return a reference to this, so the API can be used fluently
+   */
+  StageContext remove(Object key);
+
+  /**
    * Retrieves a value by key from the context.
    *
    * @param key -  key as {@link Object} to retrieve value from the context data holder

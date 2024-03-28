@@ -56,7 +56,8 @@ public class FlowTestUtils {
     .lastExecutionsStatusCacheSize(10)
     .build();
 
-  public static Flow flowForStageSequence(Stage... stages) {
+  @SafeVarargs
+  public static Flow flowForStageSequence(Stage<? extends StageContext>... stages) {
     var flowBuilder = Flow.builder();
     for (var stage : stages) {
       flowBuilder.stage(stage);
@@ -65,7 +66,8 @@ public class FlowTestUtils {
     return flowBuilder.build();
   }
 
-  public static Flow flowForStageSequence(FlowExecutionStrategy strategy, Stage... stages) {
+  @SafeVarargs
+  public static Flow flowForStageSequence(FlowExecutionStrategy strategy, Stage<? extends StageContext>... stages) {
     var flowBuilder = Flow.builder().executionStrategy(strategy);
     for (var stage : stages) {
       flowBuilder.stage(stage);
@@ -74,7 +76,8 @@ public class FlowTestUtils {
     return flowBuilder.build();
   }
 
-  public static Flow flowForStageSequence(String id, Stage... stages) {
+  @SafeVarargs
+  public static Flow flowForStageSequence(String id, Stage<StageContext>... stages) {
     var flowBuilder = Flow.builder().id(id);
     for (var stage : stages) {
       flowBuilder.stage(stage);
@@ -83,7 +86,8 @@ public class FlowTestUtils {
     return flowBuilder.build();
   }
 
-  public static Flow flowForStageSequence(String id, FlowExecutionStrategy strategy, Stage... stages) {
+  @SafeVarargs
+  public static Flow flowForStageSequence(String id, FlowExecutionStrategy strategy, Stage<StageContext>... stages) {
     var flowBuilder = Flow.builder().id(id).executionStrategy(strategy);
 
     for (var stage : stages) {
@@ -100,44 +104,49 @@ public class FlowTestUtils {
     );
   }
 
-  public static StageContext stageContext(Stage root) {
+  public static StageContext stageContext(Stage<? extends StageContext> root) {
     return StageContext.of(root.getId(), emptyMap(), emptyMap());
   }
 
-  public static StageContext stageContext(Stage root, Map<?, ?> flowParameters) {
+  public static StageContext stageContext(Stage<? extends StageContext> root, Map<?, ?> flowParameters) {
     return StageContext.of(root.getId(), flowParameters, emptyMap());
   }
 
-  public static StageResult stageResult(Stage root, String name, ExecutionStatus status) {
+  public static StageResult stageResult(Stage<? extends StageContext> root, String name, ExecutionStatus status) {
     return stageResult(root, name, status, null, emptyList());
   }
 
-  public static StageResult stageResult(Stage root, Stage stage, ExecutionStatus status) {
+  public static StageResult stageResult(Stage<? extends StageContext> root,
+    Stage<? extends StageContext> stage, ExecutionStatus status) {
     return stageResult(root, stage.getId(), status, null, emptyList());
   }
 
-  public static StageResult stageResult(Stage root, String name, ExecutionStatus status, Exception error) {
-    return stageResult(root, name, status, error, emptyList());
+  public static StageResult stageResult(Stage<? extends StageContext> root,
+    String name, ExecutionStatus status, Exception err) {
+    return stageResult(root, name, status, err, emptyList());
   }
 
-  public static StageResult stageResult(Stage root, Stage stage, ExecutionStatus status, Exception error) {
+  public static StageResult stageResult(Stage<? extends StageContext> root, Stage<? extends StageContext> stage,
+    ExecutionStatus status, Exception error) {
     return stageResult(root, stage.getId(), status, error, emptyList());
   }
 
-  public static StageResult stageResult(Stage root, String name, ExecutionStatus status, List<StageResult> results) {
+  public static StageResult stageResult(Stage<? extends StageContext> root, String name,
+    ExecutionStatus status, List<StageResult> results) {
     return stageResult(root, name, status, null, results);
   }
 
-  public static StageResult stageResult(Stage root, Stage stage, ExecutionStatus status, List<StageResult> results) {
+  public static StageResult stageResult(Stage<? extends StageContext> root, Stage<? extends StageContext> stage,
+    ExecutionStatus status, List<StageResult> results) {
     return stageResult(root, stage.getId(), status, null, results);
   }
 
-  public static StageResult stageResult(Stage root, Stage stage,
+  public static StageResult stageResult(Stage<? extends StageContext> root, Stage<? extends StageContext> stage,
     ExecutionStatus status, Exception error, List<StageResult> results) {
     return stageResult(root, stage.getId(), status, error, results);
   }
 
-  public static StageResult stageResult(Stage root, String name,
+  public static StageResult stageResult(Stage<? extends StageContext> root, String name,
     ExecutionStatus status, Exception error, List<StageResult> subResults) {
     return StageResult.builder()
       .flowId(root.getId())
@@ -163,7 +172,14 @@ public class FlowTestUtils {
     return null;
   }
 
-  public static void mockStageNames(Stage... stages) {
+  public static Object removeParameterFromContext(InvocationOnMock invocation, Object key) {
+    var stageContext = invocation.<StageContext>getArgument(0);
+    stageContext.remove(key);
+    return null;
+  }
+
+  @SafeVarargs
+  public static void mockStageNames(Stage<? extends StageContext>... stages) {
     for (var stage : stages) {
       var stringValue = stage.toString();
       when(stage.getId()).thenReturn(stringValue);

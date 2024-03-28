@@ -47,7 +47,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class FlowEngineImplTest {
 
-  @Mock private Stage simpleStage;
+  @Mock private Stage<StageContext> simpleStage;
   @Mock private CancellableTestStage cancellableStage;
 
   @AfterEach
@@ -106,7 +106,7 @@ class FlowEngineImplTest {
   @Test
   void execute_positive_interruptedException() {
     var countDownLatch = new CountDownLatch(1);
-    var testStage = new Stage() {
+    var testStage = new Stage<>() {
       @Override
       public void execute(StageContext context) {
         try {
@@ -164,7 +164,7 @@ class FlowEngineImplTest {
 
   @Test
   void execute_positive_timeoutException() {
-    var testStage = new Stage() {
+    var testStage = new Stage<>() {
       @Override
       public void execute(StageContext context) {
         awaitFor(FIVE_HUNDRED_MILLISECONDS);
@@ -200,7 +200,7 @@ class FlowEngineImplTest {
       assertThat(flowEngine.getFlowStatus(flow)).isEqualTo(SUCCESS));
   }
 
-  private static final class AwaitingStage implements Stage {
+  private static final class AwaitingStage implements Stage<StageContext> {
 
     @Override
     public void execute(StageContext context) {

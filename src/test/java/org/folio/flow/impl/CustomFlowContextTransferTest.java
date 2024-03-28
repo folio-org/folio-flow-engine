@@ -25,7 +25,8 @@ import org.folio.flow.api.Flow;
 import org.folio.flow.api.FlowEngine;
 import org.folio.flow.api.ParallelStage;
 import org.folio.flow.api.StageContext;
-import org.folio.flow.api.models.RecoverableAndCancellableTestStage;
+import org.folio.flow.api.models.StageWithInheritance;
+import org.folio.flow.api.models.TestStageContextWrapper;
 import org.folio.flow.exception.FlowCancelledException;
 import org.folio.flow.model.StageResult;
 import org.folio.flow.support.UnitTest;
@@ -39,12 +40,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @UnitTest
 @ExtendWith(MockitoExtension.class)
-public class FlowContextTransferTest {
+public class CustomFlowContextTransferTest {
 
-  @Mock private RecoverableAndCancellableTestStage stage1;
-  @Mock private RecoverableAndCancellableTestStage stage2;
-  @Mock private RecoverableAndCancellableTestStage stage3;
-  @Mock private RecoverableAndCancellableTestStage stage4;
+  @Mock private StageWithInheritance stage1;
+  @Mock private StageWithInheritance stage2;
+  @Mock private StageWithInheritance stage3;
+  @Mock private StageWithInheritance stage4;
 
   @AfterEach
   void tearDown() {
@@ -92,17 +93,17 @@ public class FlowContextTransferTest {
         stageResult(flow, stage4, FAILED, exception));
 
     var flowId = flow.getId();
-    verify(stage1).execute(StageContext.of(flowId, flowParams, Map.of("p", "v1")));
-    verify(stage1).cancel(StageContext.of(flowId, flowParams, Map.of("p", "v4", "c", "w1")));
+    verify(stage1).execute(wrapper(flowId, flowParams, Map.of("p", "v1")));
+    verify(stage1).cancel(wrapper(flowId, flowParams, Map.of("p", "v4", "c", "w1")));
 
-    verify(stage2).execute(StageContext.of(flowId, flowParams, Map.of("p", "v2")));
-    verify(stage2).cancel(StageContext.of(flowId, flowParams, Map.of("p", "v4", "c", "w2")));
+    verify(stage2).execute(wrapper(flowId, flowParams, Map.of("p", "v2")));
+    verify(stage2).cancel(wrapper(flowId, flowParams, Map.of("p", "v4", "c", "w2")));
 
-    verify(stage3).execute(StageContext.of(flowId, flowParams, emptyMap()));
-    verify(stage3).cancel(StageContext.of(flowId, flowParams, Map.of("p", "v4", "c", "w3")));
+    verify(stage3).execute(wrapper(flowId, flowParams, emptyMap()));
+    verify(stage3).cancel(wrapper(flowId, flowParams, Map.of("p", "v4", "c", "w3")));
 
-    verify(stage4).execute(StageContext.of(flowId, flowParams, emptyMap()));
-    verify(stage4).recover(StageContext.of(flowId, flowParams, emptyMap()));
+    verify(stage4).execute(wrapper(flowId, flowParams, emptyMap()));
+    verify(stage4).recover(wrapper(flowId, flowParams, emptyMap()));
   }
 
   @ParameterizedTest(name = PARAMETERIZED_TEST_NAME)
@@ -135,19 +136,19 @@ public class FlowContextTransferTest {
         stageResult(mainFlow, subflow2, CANCELLED, List.of(stageResult(subflow2, stage3, CANCELLED))),
         stageResult(mainFlow, stage4, CANCELLED, exception));
 
-    var mainFlowExpectedContext = StageContext.of(mainFlow.getId(), mainFlowParams, emptyMap());
+    var mainFlowExpectedContext = wrapper(mainFlow.getId(), mainFlowParams, emptyMap());
     verify(stage1).execute(mainFlowExpectedContext);
     verify(stage1).recover(mainFlowExpectedContext);
     verify(stage1).cancel(mainFlowExpectedContext);
 
     var subflow1ExpectedParams = Map.of("sf1", "value1", "mf", "overwritten");
-    var subflow1ExpectedContext = StageContext.of(subflow1.getId(), subflow1ExpectedParams, emptyMap());
+    var subflow1ExpectedContext = wrapper(subflow1.getId(), subflow1ExpectedParams, emptyMap());
     verify(stage2).execute(subflow1ExpectedContext);
     verify(stage2).recover(subflow1ExpectedContext);
     verify(stage2).cancel(subflow1ExpectedContext);
 
     var subflow2ExpectedParams = Map.of("mf", "main-value", "sf2", "test");
-    var subflow2ExpectedContext = StageContext.of(subflow2.getId(), subflow2ExpectedParams, emptyMap());
+    var subflow2ExpectedContext = wrapper(subflow2.getId(), subflow2ExpectedParams, emptyMap());
     verify(stage3).execute(subflow2ExpectedContext);
     verify(stage3).recover(subflow2ExpectedContext);
     verify(stage3).cancel(subflow2ExpectedContext);
@@ -197,21 +198,25 @@ public class FlowContextTransferTest {
           stageResult(mainFlow, subflow2, CANCELLED, List.of(stageResult(subflow2, stage3, CANCELLED))))),
         stageResult(mainFlow, subflow3, CANCELLED, exception, List.of(stageResult(subflow3, stage4, FAILED))));
 
-    var mainFlowExpectedContext = StageContext.of(mainFlow.getId(), mainFlowParams, emptyMap());
+    var mainFlowExpectedContext = wrapper(mainFlow.getId(), mainFlowParams, emptyMap());
     verify(stage1).execute(mainFlowExpectedContext);
     verify(stage1).cancel(mainFlowExpectedContext);
 
-    var subflow1ExpectedContext = StageContext.of(subflow1.getId(), subflow1Params, emptyMap());
+    var subflow1ExpectedContext = wrapper(subflow1.getId(), subflow1Params, emptyMap());
     verify(stage2).execute(subflow1ExpectedContext);
     verify(stage2).cancel(subflow1ExpectedContext);
 
     var subflow2ExpectedParams = Map.of("mf", "main-value", "sf2", "test");
-    var subflow2ExpectedContext = StageContext.of(subflow2.getId(), subflow2ExpectedParams, emptyMap());
+    var subflow2ExpectedContext = wrapper(subflow2.getId(), subflow2ExpectedParams, emptyMap());
     verify(stage3).execute(subflow2ExpectedContext);
     verify(stage3).cancel(subflow2ExpectedContext);
 
-    var subflow3ExpectedContext = StageContext.of(subflow3.getId(), subflow3Params, emptyMap());
+    var subflow3ExpectedContext = wrapper(subflow3.getId(), subflow3Params, emptyMap());
     verify(stage4).execute(subflow3ExpectedContext);
     verify(stage4).recover(subflow3ExpectedContext);
+  }
+
+  private static TestStageContextWrapper wrapper(Object flowId, Map<?, ?> flowParameters, Map<?, ?> data) {
+    return new TestStageContextWrapper(StageContext.of(flowId, flowParameters, data));
   }
 }

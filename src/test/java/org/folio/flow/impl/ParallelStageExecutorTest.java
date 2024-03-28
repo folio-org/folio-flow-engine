@@ -26,6 +26,7 @@ import java.util.List;
 import org.folio.flow.api.FlowEngine;
 import org.folio.flow.api.ParallelStage;
 import org.folio.flow.api.Stage;
+import org.folio.flow.api.StageContext;
 import org.folio.flow.api.models.CancellableTestStage;
 import org.folio.flow.api.models.RecoverableAndCancellableTestStage;
 import org.folio.flow.api.models.RecoverableTestStage;
@@ -47,9 +48,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 public class ParallelStageExecutorTest {
 
-  @Mock private Stage simpleStage;
-  @Mock private Stage simpleStage1;
-  @Mock private Stage simpleStage2;
+  @Mock private Stage<StageContext> simpleStage;
+  @Mock private Stage<StageContext> simpleStage1;
+  @Mock private Stage<StageContext> simpleStage2;
   @Mock private RecoverableTestStage recoverableStage;
   @Mock private CancellableTestStage cancellableStage;
   @Mock private CancellableTestStage cancellableStage1;

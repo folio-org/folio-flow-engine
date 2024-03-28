@@ -23,7 +23,7 @@ import org.folio.flow.utils.FlowUtils;
 @Data
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-public final class Flow implements Stage {
+public final class Flow implements Stage<StageContext> {
 
   /**
    * Flow identifier.
@@ -126,7 +126,7 @@ public final class Flow implements Stage {
      * @param stage - {@link Stage} object
      * @return reference to the current {@link FlowBuilder} object
      */
-    public FlowBuilder stage(Stage stage) {
+    public FlowBuilder stage(Stage<? extends StageContext> stage) {
       requireNonNull(stage, "Stage must not be null");
       if (stageExecutors == null) {
         this.stageExecutors = new ArrayList<>();
@@ -201,7 +201,7 @@ public final class Flow implements Stage {
      * @param stage - a {@link Stage} to execute if flow finished with error
      * @return reference to the current {@link FlowBuilder} object
      */
-    public FlowBuilder onFlowError(Stage stage) {
+    public FlowBuilder onFlowError(Stage<? extends StageContext> stage) {
       requireNonNull(stage, "onFlowError stage must not be null");
       this.onFlowErrorFinalStage = getStageExecutor(stage);
       return this;
@@ -224,7 +224,7 @@ public final class Flow implements Stage {
      * @param stage - a {@link Stage} to execute if flow cancelled
      * @return reference to the current {@link FlowBuilder} object
      */
-    public FlowBuilder onFlowCancellation(Stage stage) {
+    public FlowBuilder onFlowCancellation(Stage<? extends StageContext> stage) {
       requireNonNull(stage, "onFlowCancellation stage must not be null");
       this.onFlowCancellationFinalStage = getStageExecutor(stage);
       return this;
@@ -248,7 +248,7 @@ public final class Flow implements Stage {
      * @param stage - a {@link Stage} to execute if flow is failed to cancel
      * @return reference to the current {@link FlowBuilder} object
      */
-    public FlowBuilder onFlowCancellationError(Stage stage) {
+    public FlowBuilder onFlowCancellationError(Stage<? extends StageContext> stage) {
       requireNonNull(stage, "onFlowCancellationError stage must not be null");
       this.onFlowCancellationErrorFinalStage = getStageExecutor(stage);
       return this;
@@ -271,7 +271,7 @@ public final class Flow implements Stage {
      * @param stage - a {@link Stage} to execute if flow is skipped
      * @return reference to the current {@link FlowBuilder} object
      */
-    public FlowBuilder onFlowSkip(Stage stage) {
+    public FlowBuilder onFlowSkip(Stage<? extends StageContext> stage) {
       requireNonNull(stage, "onFlowSkipError stage must not be null");
       this.onFlowSkipFinalStage = getStageExecutor(stage);
       return this;

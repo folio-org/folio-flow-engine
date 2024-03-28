@@ -17,6 +17,7 @@ import org.folio.flow.api.DynamicStage;
 import org.folio.flow.api.Flow;
 import org.folio.flow.api.ParallelStage;
 import org.folio.flow.api.Stage;
+import org.folio.flow.api.StageContext;
 import org.folio.flow.impl.DefaultStageExecutor;
 import org.folio.flow.impl.DynamicStageExecutor;
 import org.folio.flow.impl.FlowExecutor;
@@ -74,7 +75,7 @@ public class FlowUtils {
    * @param stage - stage as {@link Stage} object
    * @return {@link StageExecutor} object
    */
-  public static StageExecutor getStageExecutor(Stage stage) {
+  public static <T extends StageContext> StageExecutor getStageExecutor(Stage<T> stage) {
     if (stage instanceof Flow flow) {
       return new FlowExecutor(flow);
     }
@@ -87,7 +88,7 @@ public class FlowUtils {
       return new DynamicStageExecutor(dynamicStage);
     }
 
-    return new DefaultStageExecutor(stage);
+    return new DefaultStageExecutor<>(stage);
   }
 
   /**

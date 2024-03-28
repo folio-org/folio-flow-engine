@@ -1,34 +1,42 @@
 package org.folio.flow.api.models;
 
-import org.folio.flow.api.Cancellable;
-import org.folio.flow.api.Listenable;
 import org.folio.flow.api.Stage;
 import org.folio.flow.api.StageContext;
 
-public interface TestListenableStage extends Stage, Cancellable, Listenable {
+public class TestListenableStage implements Stage<StageContext> {
 
   @Override
-  default void onStart(StageContext context) {
-    Listenable.super.onStart(context);
+  public void execute(StageContext context) {
+    // do nothing, used as mock in unit tests
   }
 
   @Override
-  default void onSuccess(StageContext context) {
-    Listenable.super.onSuccess(context);
+  public void cancel(StageContext context) {
+    Stage.super.cancel(context);
   }
 
   @Override
-  default void onCancel(StageContext context) {
-    Listenable.super.onCancel(context);
+  public void onStart(StageContext context) {
+    Stage.super.onStart(context);
   }
 
   @Override
-  default void onCancelError(StageContext context, Exception exception) {
-    Listenable.super.onCancelError(context, exception);
+  public void onSuccess(StageContext context) {
+    Stage.super.onSuccess(context);
   }
 
   @Override
-  default void onError(StageContext context, Exception exception) {
-    Listenable.super.onError(context, exception);
+  public void onCancel(StageContext context) {
+    Stage.super.onCancel(context);
+  }
+
+  @Override
+  public void onCancelError(StageContext context, Exception exception) {
+    Stage.super.onCancelError(context, exception);
+  }
+
+  @Override
+  public void onError(StageContext context, Exception exception) {
+    Stage.super.onError(context, exception);
   }
 }
