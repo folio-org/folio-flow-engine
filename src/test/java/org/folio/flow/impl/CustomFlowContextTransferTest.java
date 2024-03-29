@@ -40,7 +40,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @UnitTest
 @ExtendWith(MockitoExtension.class)
-public class CustomFlowContextTransferTest {
+class CustomFlowContextTransferTest {
 
   @Mock private StageWithInheritance stage1;
   @Mock private StageWithInheritance stage2;

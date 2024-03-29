@@ -15,6 +15,7 @@ import static org.folio.flow.utils.FlowUtils.FLOW_ENGINE_LOGGER_NAME;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Objects;
@@ -216,7 +217,8 @@ public final class DefaultStageExecutor<T extends StageContext> implements Stage
     }
   }
 
-  private T createContextWrapper(StageContext context) throws Exception {
+  private T createContextWrapper(StageContext context)
+    throws InvocationTargetException, InstantiationException, IllegalAccessException {
     if (stageContextWrapperConstructor == null) {
       //noinspection unchecked
       return (T) StageContext.copy(context);

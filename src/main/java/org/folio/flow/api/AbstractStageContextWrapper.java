@@ -10,7 +10,7 @@ public abstract class AbstractStageContextWrapper implements StageContext {
 
   protected final StageContext context;
 
-  public AbstractStageContextWrapper(StageContext stageContext) {
+  protected AbstractStageContextWrapper(StageContext stageContext) {
     this.context = StageContext.copy(stageContext);
   }
 
