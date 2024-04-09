@@ -1,7 +1,9 @@
 package org.folio.flow.impl;
 
+import static java.util.Collections.emptyList;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.flow.model.ExecutionStatus.CANCELLED;
+import static org.folio.flow.model.ExecutionStatus.FAILED;
 import static org.folio.flow.model.ExecutionStatus.SKIPPED;
 import static org.folio.flow.model.StageExecutionResult.stageResult;
 import static org.folio.flow.utils.FlowUtils.FLOW_ENGINE_LOGGER_NAME;
@@ -17,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.flow.api.DynamicStage;
 import org.folio.flow.api.NoOpStage;
+import org.folio.flow.api.Stage;
 import org.folio.flow.api.StageContext;
 import org.folio.flow.model.StageExecutionResult;
 import org.folio.flow.model.StageResultHolder;
@@ -58,13 +61,22 @@ public final class DynamicStageExecutor implements StageExecutor {
       .map(srh -> completedFuture(upstreamResult)
         .thenComposeAsync(ser -> cancelStageAsync(ser.getFlowId(), srh, ser, executor))
         .thenApply(ser -> buildCancellationResult(ser, srh)))
-      .orElseGet(() -> completedFuture(stageResult(getStageId(), upstreamResult.getContext(), CANCELLED)));
+      .orElseGet(() -> prepareDefaultCancelledResult(upstreamResult));
   }
 
   private CompletionStage<StageResultHolder> executeDynamicStageAsync(
     StageExecutionResult upstreamResult, Executor executor) {
     var context = upstreamResult.getContext();
-    var stage = defaultIfNull(dynamicStage.getStageProvider().apply(context), NoOpStage::getInstance);
+    Stage<?> stage;
+
+    try {
+      stage = defaultIfNull(dynamicStage.getStageProvider().apply(context), NoOpStage::getInstance);
+    } catch (Exception e) {
+      var exception = new RuntimeException("Failed to create a dynamic stage: " + getStageId(), e);
+      var stageResult = stageResult(getStageId(), context, FAILED, exception);
+      return completedFuture(new StageResultHolder(stageResult, null, true));
+    }
+
     var stageExecutor = FlowUtils.getStageExecutor(stage);
     return stageExecutor.execute(upstreamResult, executor)
       .thenApply(result -> new StageResultHolder(result, stageExecutor, true));
@@ -89,7 +101,7 @@ public final class DynamicStageExecutor implements StageExecutor {
       .context(StageContext.copy(result.getContext()))
       .status(srh.getStatus())
       .error(srh.getError())
-      .executedStages(List.of(srh))
+      .executedStages(srh.getStage() == null ? emptyList() : List.of(srh))
       .build();
   }
 
@@ -100,5 +112,9 @@ public final class DynamicStageExecutor implements StageExecutor {
       .context(upstreamResult.getContext())
       .status(SKIPPED)
       .build();
+  }
+
+  private CompletableFuture<StageExecutionResult> prepareDefaultCancelledResult(StageExecutionResult result) {
+    return completedFuture(stageResult(getStageId(), result.getContext(), CANCELLED, result.getError()));
   }
 }

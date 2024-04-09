@@ -6,6 +6,7 @@ import static org.assertj.core.api.InstanceOfAssertFactories.list;
 import static org.folio.flow.model.ExecutionStatus.CANCELLED;
 import static org.folio.flow.model.ExecutionStatus.FAILED;
 import static org.folio.flow.model.ExecutionStatus.SKIPPED;
+import static org.folio.flow.model.FlowExecutionStrategy.IGNORE_ON_ERROR;
 import static org.folio.flow.utils.FlowTestUtils.PARAMETERIZED_TEST_NAME;
 import static org.folio.flow.utils.FlowTestUtils.executeFlow;
 import static org.folio.flow.utils.FlowTestUtils.flowForStageSequence;
@@ -25,6 +26,7 @@ import org.folio.flow.api.Stage;
 import org.folio.flow.api.StageContext;
 import org.folio.flow.api.models.CancellableTestStage;
 import org.folio.flow.exception.FlowCancelledException;
+import org.folio.flow.exception.FlowExecutionException;
 import org.folio.flow.model.StageResult;
 import org.folio.flow.support.UnitTest;
 import org.folio.flow.utils.FlowTestUtils;
@@ -78,6 +80,42 @@ class DynamicStageExecutorTest {
     var flow = flowForStageSequence("main", dynamicStage);
     executeFlow(flow, flowEngine);
     verifyNoInteractions(simpleStage);
+  }
+
+  @ParameterizedTest(name = PARAMETERIZED_TEST_NAME)
+  @MethodSource("org.folio.flow.utils.FlowTestUtils#flowEnginesDataSource")
+  void execute_negative_failedToCreatedDynamicStage(FlowEngine flowEngine) {
+    var dynamicStage = DynamicStage.of("dynamicStage", ctx -> {
+      throw new RuntimeException("Error");
+    });
+
+    var flow = flowForStageSequence("main", dynamicStage);
+
+    var cause = new RuntimeException("Failed to create a dynamic stage: dynamicStage");
+    assertThatThrownBy(() -> executeFlow(flow, flowEngine))
+      .isInstanceOf(FlowCancelledException.class)
+      .hasMessage("Flow %s is cancelled, stage '%s' failed", flow, dynamicStage)
+      .hasCause(cause)
+      .extracting(FlowTestUtils::stageResults, list(StageResult.class))
+      .containsExactly(stageResult(flow, dynamicStage, CANCELLED, cause));
+  }
+
+  @ParameterizedTest(name = PARAMETERIZED_TEST_NAME)
+  @MethodSource("org.folio.flow.utils.FlowTestUtils#flowEnginesDataSource")
+  void execute_negative_failedToCreatedDynamicStageWithIgnoreErrors(FlowEngine flowEngine) {
+    var dynamicStage = DynamicStage.of("dynamicStage", ctx -> {
+      throw new RuntimeException("Error");
+    });
+
+    var flow = flowForStageSequence("main", IGNORE_ON_ERROR, dynamicStage);
+
+    var cause = new RuntimeException("Failed to create a dynamic stage: dynamicStage");
+    assertThatThrownBy(() -> executeFlow(flow, flowEngine))
+      .isInstanceOf(FlowExecutionException.class)
+      .hasMessage("Failed to execute flow %s, stage '%s' failed", flow, dynamicStage)
+      .hasCause(cause)
+      .extracting(FlowTestUtils::stageResults, list(StageResult.class))
+      .containsExactly(stageResult(flow, dynamicStage, FAILED, cause));
   }
 
   @ParameterizedTest(name = PARAMETERIZED_TEST_NAME)
