@@ -1,6 +1,5 @@
 package org.folio.flow.api;
 
-import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -21,6 +20,7 @@ import static org.folio.flow.utils.FlowTestUtils.executeFlow;
 import static org.folio.flow.utils.FlowTestUtils.flowForStageSequence;
 import static org.folio.flow.utils.FlowTestUtils.mockStageNames;
 import static org.folio.flow.utils.FlowTestUtils.stageContext;
+import static org.folio.flow.utils.FlowTestUtils.stageExecutionResult;
 import static org.folio.flow.utils.FlowTestUtils.stageResult;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
@@ -120,7 +120,7 @@ class FlowTest {
       var customStageExecutor = mock(StageExecutor.class);
       var stageExecutorName = "customStageExecutor";
       var stageContext = StageContext.of("flow-id", emptyMap(), emptyMap());
-      var expectedStageResult = StageExecutionResult.stageResult(stageExecutorName, stageContext, SUCCESS);
+      var expectedStageResult = stageExecutionResult(stageExecutorName, stageContext, SUCCESS);
 
       when(customStageExecutor.execute(any(), any())).thenReturn(completedFuture(expectedStageResult));
 
@@ -136,7 +136,7 @@ class FlowTest {
       var customStageExecutor = mock(StageExecutor.class);
       var stageExecutorName = "customStageExecutor";
       var stageContext = StageContext.of("flow-id", emptyMap(), emptyMap());
-      var expectedStageResult = StageExecutionResult.stageResult(stageExecutorName, stageContext, SUCCESS);
+      var expectedStageResult = stageExecutionResult(stageExecutorName, stageContext, SUCCESS);
 
       var exception = new RuntimeException("error");
       doThrow(exception).when(simpleStage).execute(any());
@@ -169,7 +169,7 @@ class FlowTest {
       var customStageExecutor = mock(StageExecutor.class);
       var stageExecutorName = "customStageExecutor";
       var stageContext = StageContext.of("flow-id", emptyMap(), emptyMap());
-      var expectedStageResult = StageExecutionResult.stageResult(stageExecutorName, stageContext, SUCCESS);
+      var expectedStageResult = stageExecutionResult(stageExecutorName, stageContext, SUCCESS);
 
       var exception = new RuntimeException("error");
       doThrow(exception).when(simpleStage).execute(any());
@@ -346,7 +346,7 @@ class FlowTest {
       when(onSubFlowCancellationError.execute(any(), any())).thenAnswer(inv -> {
         var ser = inv.<StageExecutionResult>getArgument(0);
         var stageId = "onSubFlowCancellationErrorStageExecutor";
-        var sr = StageExecutionResult.stageResult(stageId, ser.getContext(), SUCCESS, null, emptyList());
+        var sr = stageExecutionResult(stageId, ser.getContext(), SUCCESS);
         return completedFuture(sr);
       });
 
@@ -541,7 +541,7 @@ class FlowTest {
       var skipStageExecutor = mock(StageExecutor.class, "skipStageExecutor");
       when(skipStageExecutor.execute(any(), any())).thenAnswer(inv -> {
         var ser = inv.<StageExecutionResult>getArgument(0);
-        var sr = StageExecutionResult.stageResult("skipStageExecutor", ser.getContext(), SUCCESS, null, emptyList());
+        var sr = stageExecutionResult("skipStageExecutor", ser.getContext(), SUCCESS);
         return completedFuture(sr);
       });
 
@@ -721,8 +721,7 @@ class FlowTest {
       var skipStageExecutor = mock(StageExecutor.class, "skipStageExecutor");
       when(skipStageExecutor.execute(any(), any())).thenAnswer(inv -> {
         var ser = inv.<StageExecutionResult>getArgument(0);
-        var sr = StageExecutionResult.stageResult("skipStageExecutor", ser.getContext(), SUCCESS, null, emptyList());
-        return completedFuture(sr);
+        return completedFuture(stageExecutionResult("skipStageExecutor", ser.getContext(), SUCCESS));
       });
 
       mockStageNames(simpleStage, cancellableStage1);

@@ -1,5 +1,6 @@
 package org.folio.flow.model;
 
+import static java.util.Collections.emptyList;
 import static org.folio.flow.utils.FlowUtils.convertToStageResults;
 
 import java.io.Serial;
@@ -26,7 +27,12 @@ public class StageResult implements Serializable {
   /**
    * Stage name.
    */
-  private final String stageName;
+  private final String stageId;
+
+  /**
+   * Stage type.
+   */
+  private final String stageType;
 
   /**
    * Stage execution status.
@@ -42,7 +48,8 @@ public class StageResult implements Serializable {
   /**
    * A list of internal stage results (can be empty).
    */
-  private final List<StageResult> subStageResults;
+  @Builder.Default
+  private final List<StageResult> subStageResults = emptyList();
 
   /**
    * Creates {@link StageResult} from {@link StageExecutionResult} object.
@@ -54,6 +61,7 @@ public class StageResult implements Serializable {
     return new StageResult(
       stageExecutionResult.getFlowId(),
       stageExecutionResult.getStageName(),
+      stageExecutionResult.getStageType(),
       stageExecutionResult.getStatus(),
       stageExecutionResult.getError(),
       convertToStageResults(stageExecutionResult.getExecutedStages())

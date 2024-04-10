@@ -233,7 +233,7 @@ public class ParallelStageExecutorTest {
         .hasCause(exception)
         .extracting(FlowTestUtils::stageResults, list(StageResult.class))
         .containsExactly(
-          stageResult(flow, parallelStage.getId(), FAILED, exception, List.of(
+          stageResult(flow, parallelStage, FAILED, exception, List.of(
             stageResult(flow, simpleStage, FAILED, exception),
             stageResult(flow, recoverableStage, SUCCESS),
             stageResult(flow, cancellableStage, SUCCESS))));
@@ -302,7 +302,7 @@ public class ParallelStageExecutorTest {
               stageResult(parFlow2, simpleStage1, FAILED, exception),
               stageResult(parFlow2, cancellableStage1, SKIPPED))),
 
-            stageResult(flow, parFlow3.getId(), SUCCESS, List.of(
+            stageResult(flow, parFlow3, SUCCESS, List.of(
               stageResult(parFlow3, simpleStage2, SUCCESS),
               stageResult(parFlow3, cancellableStage2, SUCCESS)))
           )));

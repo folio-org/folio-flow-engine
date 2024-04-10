@@ -11,7 +11,7 @@ import lombok.RequiredArgsConstructor;
 @SuppressWarnings("ClassCanBeRecord")
 public final class DynamicStage implements Stage<StageContext> {
 
-  private final String name;
+  private final String id;
   private final Function<StageContext, Stage<? extends StageContext>> stageProvider;
 
   /**
@@ -30,8 +30,8 @@ public final class DynamicStage implements Stage<StageContext> {
    * @param stageProvider - stage provider as {@link Function}
    * @return {@link DynamicStage} object
    */
-  public static DynamicStage of(String name, Function<StageContext, Stage<? extends StageContext>> stageProvider) {
-    return new DynamicStage(name, stageProvider);
+  public static DynamicStage of(String id, Function<StageContext, Stage<? extends StageContext>> stageProvider) {
+    return new DynamicStage(id, stageProvider);
   }
 
   @Override
@@ -41,6 +41,6 @@ public final class DynamicStage implements Stage<StageContext> {
 
   @Override
   public String toString() {
-    return this.name;
+    return this.id;
   }
 }

@@ -37,7 +37,7 @@ public class FlowCancellationException extends StageExecutionException {
   private static List<String> getNotCancelledStagesNames(List<StageResult> stageResults) {
     return stageResults.stream()
       .filter(stageResult -> stageResult.getStatus() == CANCELLATION_FAILED)
-      .map(StageResult::getStageName)
+      .map(StageResult::getStageId)
       .collect(Collectors.toList());
   }
 }

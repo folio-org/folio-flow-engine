@@ -23,6 +23,11 @@ public class StageExecutionResult {
   private final String stageName;
 
   /**
+   * Type of executed stage as {@link String} object.
+   */
+  private final String stageType;
+
+  /**
    * Stage specific {@link StageContext} object.
    */
   private final StageContext context;
@@ -43,43 +48,6 @@ public class StageExecutionResult {
    */
   @Builder.Default
   private final List<StageResultHolder> executedStages = emptyList();
-
-  /**
-   * Creates a stage result from given parameters.
-   *
-   * @param ctx - corresponding {@link StageContext} object with stage-related data
-   * @param status - execution status
-   * @return created {@link StageExecutionResult} object
-   */
-  public static StageExecutionResult stageResult(String name, StageContext ctx, ExecutionStatus status) {
-    return new StageExecutionResult(name, ctx, status, null, emptyList());
-  }
-
-  /**
-   * Creates a stage result from given parameters.
-   *
-   * @param ctx - corresponding {@link StageContext} object with stage-related data
-   * @param status - execution status
-   * @param err - caught exception, nullable
-   * @return created {@link StageExecutionResult} object
-   */
-  public static StageExecutionResult stageResult(String name, StageContext ctx, ExecutionStatus status, Exception err) {
-    return new StageExecutionResult(name, ctx, status, err, emptyList());
-  }
-
-  /**
-   * Creates a stage result from given parameters.
-   *
-   * @param ctx - corresponding {@link StageContext} object with stage-related data
-   * @param status - execution status
-   * @param error - caught exception, nullable
-   * @param executedStages - list with executed stages as {@link StageResultHolder} objects
-   * @return created {@link StageExecutionResult} object
-   */
-  public static StageExecutionResult stageResult(String name, StageContext ctx, ExecutionStatus status,
-    Exception error, List<StageResultHolder> executedStages) {
-    return new StageExecutionResult(name, ctx, status, error, executedStages);
-  }
 
   /**
    * Checks if {@link StageExecutionResult} can be considered as failed.
@@ -115,7 +83,7 @@ public class StageExecutionResult {
    * @return a new {@link StageExecutionResult} object with updated {@link ExecutionStatus} value.
    */
   public StageExecutionResult withStatus(ExecutionStatus status) {
-    return new StageExecutionResult(stageName, context, status, error, executedStages);
+    return new StageExecutionResult(stageName, stageType, context, status, error, executedStages);
   }
 
   /**
@@ -132,6 +100,6 @@ public class StageExecutionResult {
   public StageExecutionResult withFlowId(String flowId) {
     return Objects.equals(this.context.flowId(), flowId)
       ? this
-      : new StageExecutionResult(stageName, context.withFlowId(flowId), status, error, executedStages);
+      : new StageExecutionResult(stageName, stageType, context.withFlowId(flowId), status, error, executedStages);
   }
 }

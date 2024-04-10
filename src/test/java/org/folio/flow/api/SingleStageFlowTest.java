@@ -337,7 +337,7 @@ public class SingleStageFlowTest {
         .hasMessage("Failed to execute flow %s, stage '%s' failed", flow, simpleStage)
         .hasCause(exception)
         .extracting(FlowTestUtils::stageResults, list(StageResult.class))
-        .containsExactly(stageResult(flow, "simpleStage", FAILED, exception));
+        .containsExactly(stageResult(flow, simpleStage, FAILED, exception));
 
       verify(simpleStage).execute(expectedStageContext);
     }

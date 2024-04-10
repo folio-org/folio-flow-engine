@@ -9,7 +9,6 @@ import static org.folio.flow.model.ExecutionStatus.SKIPPED;
 import static org.folio.flow.model.ExecutionStatus.SUCCESS;
 import static org.folio.flow.model.FlowExecutionStrategy.CANCEL_ON_ERROR;
 import static org.folio.flow.model.FlowExecutionStrategy.IGNORE_ON_ERROR;
-import static org.folio.flow.model.StageExecutionResult.stageResult;
 import static org.folio.flow.utils.FlowUtils.FLOW_ENGINE_LOGGER_NAME;
 import static org.folio.flow.utils.FlowUtils.getLastFailedStage;
 import static org.folio.flow.utils.FlowUtils.getLastFailedStageWithAnyStatusOf;
@@ -44,6 +43,11 @@ public class FlowExecutor implements StageExecutor {
   @Override
   public String getStageId() {
     return flow.getId();
+  }
+
+  @Override
+  public String getStageType() {
+    return "Flow";
   }
 
   @Override
@@ -127,7 +131,12 @@ public class FlowExecutor implements StageExecutor {
     var upstreamContext = ser.getContext();
     var flowParameters = mergeFlowParameters(upstreamContext.flowParameters(), flow.getFlowParameters());
     var stageContext = StageContext.of(stageName, flowParameters, upstreamContext.data());
-    return stageResult(stageName, stageContext, ser.getStatus());
+    return StageExecutionResult.builder()
+      .stageName(stageName)
+      .stageType("Flow")
+      .context(stageContext)
+      .status(ser.getStatus())
+      .build();
   }
 
   private CompletableFuture<StageExecutionResult> finalizeFlowExecution(
@@ -176,9 +185,16 @@ public class FlowExecutor implements StageExecutor {
     var resultStatus = getFlowExecutionStatus(ser);
     var stageContextData = ser.getContext().data();
     var resolvedParams = upstreamResult.getContext().flowParameters();
-    var resultContext = StageContext.of(upstreamResult.getFlowId(), resolvedParams, stageContextData);
     log.debug("[{}] Flow is finished with status: {}", getStageId(), resultStatus);
-    return stageResult(this.getStageId(), resultContext, resultStatus, lastFailedStageError, executedStages);
+
+    return StageExecutionResult.builder()
+      .stageName(getStageId())
+      .stageType(getStageType())
+      .context(StageContext.of(upstreamResult.getFlowId(), resolvedParams, stageContextData))
+      .status(resultStatus)
+      .error(lastFailedStageError)
+      .executedStages(executedStages)
+      .build();
   }
 
   private static ExecutionStatus getFlowExecutionStatus(StageExecutionResult ser) {
@@ -196,11 +212,11 @@ public class FlowExecutor implements StageExecutor {
     log.debug("[{}] Flow is skipped", getStageId());
     var onFlowSkipFinalStage = flow.getOnFlowSkipFinalStage();
     if (onFlowSkipFinalStage == null) {
-      return completedFuture(stageResult(getStageId(), stageContext, SKIPPED, null, deque.getExecutedStagesAsList()));
+      return completedFuture(getStageResult(deque, stageContext));
     }
 
     return getFinalStageExecutionFuture(onFlowSkipFinalStage, executor, ser, deque)
-      .thenApply(result -> stageResult(getStageId(), stageContext, SKIPPED, null, deque.getExecutedStagesAsList()));
+      .thenApply(result -> getStageResult(deque, stageContext));
   }
 
   private StageExecutionResult createCancelledFlowResult(StageExecutionResult upstreamResult, StageExecutionResult ser,
@@ -224,15 +240,32 @@ public class FlowExecutor implements StageExecutor {
     var contextData = ser.getContext().data();
     var upstreamFlowId = upstreamResult.getFlowId();
     var upstreamFlowParameters = upstreamResult.getContext().flowParameters();
-    var updatedResultContext = StageContext.of(upstreamFlowId, upstreamFlowParameters, contextData);
     log.debug("[{}] Flow is cancelled with status: {}", getStageId(), finalStatus);
-    return stageResult(getStageId(), updatedResultContext, finalStatus, lastFailedStageError, executedStages);
+
+    return StageExecutionResult.builder()
+      .stageName(getStageId())
+      .stageType(getStageType())
+      .context(StageContext.of(upstreamFlowId, upstreamFlowParameters, contextData))
+      .status(finalStatus)
+      .error(lastFailedStageError)
+      .executedStages(executedStages)
+      .build();
   }
 
   private static <K, V> Map<K, V> mergeFlowParameters(Map<K, V> oldParams, Map<K, V> newParams) {
     var mergeResult = new HashMap<>(oldParams);
     mergeResult.putAll(newParams);
     return Map.copyOf(mergeResult);
+  }
+
+  private StageExecutionResult getStageResult(ExecutionDeque deque, StageContext stageContext) {
+    return StageExecutionResult.builder()
+      .stageName(getStageId())
+      .stageType(getStageType())
+      .context(stageContext)
+      .status(SKIPPED)
+      .executedStages(deque.getExecutedStagesAsList())
+      .build();
   }
 
   @RequiredArgsConstructor

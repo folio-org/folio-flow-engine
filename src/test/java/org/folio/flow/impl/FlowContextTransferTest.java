@@ -161,9 +161,9 @@ public class FlowContextTransferTest {
   @MethodSource("org.folio.flow.utils.FlowTestUtils#flowEnginesDataSource")
   void execute_positive_parallelFlowCheck(FlowEngine flowEngine) {
     mockStageNames(stage1, stage2, stage3, stage4);
-    var exception = new RuntimeException();
-    doThrow(exception).when(stage4).execute(any());
-    doThrow(exception).when(stage4).recover(any());
+    var error = new RuntimeException();
+    doThrow(error).when(stage4).execute(any());
+    doThrow(error).when(stage4).recover(any());
     when(stage4.shouldCancelIfFailed(any())).thenReturn(false);
 
     mockStageNames(stage1, stage2, stage3, stage4);
@@ -188,14 +188,14 @@ public class FlowContextTransferTest {
     assertThatThrownBy(() -> executeFlow(mainFlow, flowEngine))
       .isInstanceOf(FlowCancelledException.class)
       .hasMessage("Flow %s is cancelled, stage '%s' failed", mainFlow, subflow3)
-      .hasCause(exception)
+      .hasCause(error)
       .extracting(FlowTestUtils::stageResults, list(StageResult.class))
       .containsExactly(
         stageResult(mainFlow, stage1, CANCELLED),
         stageResult(mainFlow, parallelStage, CANCELLED, List.of(
           stageResult(mainFlow, subflow1, CANCELLED, List.of(stageResult(subflow1, stage2, CANCELLED))),
           stageResult(mainFlow, subflow2, CANCELLED, List.of(stageResult(subflow2, stage3, CANCELLED))))),
-        stageResult(mainFlow, subflow3, CANCELLED, exception, List.of(stageResult(subflow3, stage4, FAILED))));
+        stageResult(mainFlow, subflow3, CANCELLED, error, List.of(stageResult(subflow3, stage4, FAILED, error))));
 
     var mainFlowExpectedContext = StageContext.of(mainFlow.getId(), mainFlowParams, emptyMap());
     verify(stage1).execute(mainFlowExpectedContext);

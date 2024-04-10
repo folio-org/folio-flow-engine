@@ -6,8 +6,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.folio.flow.model.ExecutionStatus.CANCELLATION_FAILED;
 import static org.folio.flow.model.ExecutionStatus.FAILED;
 import static org.folio.flow.model.ExecutionStatus.SUCCESS;
-import static org.folio.flow.model.StageExecutionResult.stageResult;
 import static org.folio.flow.utils.FlowTestUtils.mockStageNames;
+import static org.folio.flow.utils.FlowTestUtils.stageExecutionResult;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import java.lang.reflect.InvocationTargetException;
@@ -16,6 +16,7 @@ import org.folio.flow.api.AbstractStageContextWrapper;
 import org.folio.flow.api.Stage;
 import org.folio.flow.api.StageContext;
 import org.folio.flow.api.models.TestStageContextWrapper;
+import org.folio.flow.model.StageExecutionResult;
 import org.folio.flow.support.UnitTest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -52,7 +53,7 @@ class DefaultStageExecutorTest {
     assertThat(stageExecutor.isListenable()).isFalse();
 
     var stageContext = stageContext();
-    var upstreamStageResult = stageResult("test", stageContext, SUCCESS);
+    var upstreamStageResult = stageExecutionResult("test", stageContext, SUCCESS);
 
     var executeResult = stageExecutor.execute(upstreamStageResult, newSingleThreadExecutor());
     var result = executeResult.get(500, TimeUnit.MILLISECONDS);
@@ -76,7 +77,7 @@ class DefaultStageExecutorTest {
     assertThat(stageExecutor.isListenable()).isFalse();
 
     var stageContext = stageContext();
-    var upstreamStageResult = stageResult("test", stageContext, SUCCESS);
+    var upstreamStageResult = stageExecutionResult("test", stageContext, SUCCESS);
 
     var executeResult = stageExecutor.execute(upstreamStageResult, newSingleThreadExecutor());
     var result = executeResult.get(500, TimeUnit.MILLISECONDS);
@@ -98,7 +99,11 @@ class DefaultStageExecutorTest {
     assertThat(stageExecutor.isListenable()).isTrue();
 
     var stageContext = stageContext();
-    var upstreamStageResult = stageResult("test", stageContext, SUCCESS);
+    var upstreamStageResult = StageExecutionResult.builder()
+      .stageName("test")
+      .context(stageContext)
+      .status(SUCCESS)
+      .build();
 
     var executeResult = stageExecutor.execute(upstreamStageResult, newSingleThreadExecutor());
     var result = executeResult.get(500, TimeUnit.MILLISECONDS);
@@ -122,7 +127,11 @@ class DefaultStageExecutorTest {
     assertThat(stageExecutor.isListenable()).isFalse();
 
     var stageContext = stageContext();
-    var upstreamStageResult = stageResult("test", stageContext, SUCCESS);
+    var upstreamStageResult = StageExecutionResult.builder()
+      .stageName("test")
+      .context(stageContext)
+      .status(SUCCESS)
+      .build();
 
     var executeResult = stageExecutor.cancel(upstreamStageResult, newSingleThreadExecutor());
     var result = executeResult.get(500, TimeUnit.MILLISECONDS);

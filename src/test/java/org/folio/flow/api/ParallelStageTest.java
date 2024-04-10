@@ -9,6 +9,7 @@ import static org.folio.flow.model.ExecutionStatus.SUCCESS;
 import static org.folio.flow.utils.FlowTestUtils.SINGLE_THREAD_FLOW_ENGINE;
 import static org.folio.flow.utils.FlowTestUtils.executeFlow;
 import static org.folio.flow.utils.FlowTestUtils.flowForStageSequence;
+import static org.folio.flow.utils.FlowTestUtils.stageExecutionResult;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -19,7 +20,6 @@ import java.util.List;
 import java.util.concurrent.Executor;
 import org.folio.flow.api.models.CustomSimpleStage;
 import org.folio.flow.impl.StageExecutor;
-import org.folio.flow.model.StageExecutionResult;
 import org.folio.flow.support.UnitTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -108,7 +108,7 @@ class ParallelStageTest {
     var stageExecutorName = "customStageExecutor";
     var flowId = "main";
     var stageContext = StageContext.of(flowId, emptyMap(), emptyMap());
-    var expectedStageResult = StageExecutionResult.stageResult(stageExecutorName, stageContext, SUCCESS);
+    var expectedStageResult = stageExecutionResult(stageExecutorName, stageContext, SUCCESS);
 
     when(customStageExecutor.getStageId()).thenReturn(stageExecutorName);
     when(customStageExecutor.execute(any(), any())).thenReturn(completedFuture(expectedStageResult));

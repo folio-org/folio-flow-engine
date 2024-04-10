@@ -5,7 +5,6 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.folio.flow.model.ExecutionStatus.CANCELLED;
 import static org.folio.flow.model.ExecutionStatus.FAILED;
 import static org.folio.flow.model.ExecutionStatus.SKIPPED;
-import static org.folio.flow.model.StageExecutionResult.stageResult;
 import static org.folio.flow.utils.FlowUtils.FLOW_ENGINE_LOGGER_NAME;
 import static org.folio.flow.utils.FlowUtils.defaultIfNull;
 import static org.folio.flow.utils.FlowUtils.findFirstValue;
@@ -33,12 +32,12 @@ public final class DynamicStageExecutor implements StageExecutor {
 
   @Override
   public String getStageId() {
-    return dynamicStage.getName();
+    return dynamicStage.getId();
   }
 
   @Override
-  public String toString() {
-    return dynamicStage.getName();
+  public String getStageType() {
+    return "DynamicStage";
   }
 
   @Override
@@ -73,7 +72,13 @@ public final class DynamicStageExecutor implements StageExecutor {
       stage = defaultIfNull(dynamicStage.getStageProvider().apply(context), NoOpStage::getInstance);
     } catch (Exception e) {
       var exception = new RuntimeException("Failed to create a dynamic stage: " + getStageId(), e);
-      var stageResult = stageResult(getStageId(), context, FAILED, exception);
+      var stageResult = StageExecutionResult.builder()
+        .stageName(getStageId())
+        .stageType(getStageType())
+        .context(context)
+        .status(FAILED)
+        .error(exception)
+        .build();
       return completedFuture(new StageResultHolder(stageResult, null, true));
     }
 
@@ -86,6 +91,7 @@ public final class DynamicStageExecutor implements StageExecutor {
     log.debug("[{}] Dynamic stage '{}' is cancelled with status: {}", ser.getFlowId(), getStageId(), ser.getStatus());
     return StageExecutionResult.builder()
       .stageName(getStageId())
+      .stageType(getStageType())
       .context(StageContext.copy(ser.getContext()))
       .status(ser.getStatus())
       .error(ser.getError())
@@ -98,6 +104,7 @@ public final class DynamicStageExecutor implements StageExecutor {
     log.debug("[{}] Dynamic stage '{}' is finished with status: {}", result.getFlowId(), getStageId(), srh.getStatus());
     return StageExecutionResult.builder()
       .stageName(getStageId())
+      .stageType(getStageType())
       .context(StageContext.copy(result.getContext()))
       .status(srh.getStatus())
       .error(srh.getError())
@@ -109,12 +116,21 @@ public final class DynamicStageExecutor implements StageExecutor {
     log.debug("[{}] Dynamic stage is skipped: {}", upstreamResult.getFlowId(), getStageId());
     return StageExecutionResult.builder()
       .stageName(getStageId())
+      .stageType(getStageType())
       .context(upstreamResult.getContext())
       .status(SKIPPED)
       .build();
   }
 
   private CompletableFuture<StageExecutionResult> prepareDefaultCancelledResult(StageExecutionResult result) {
-    return completedFuture(stageResult(getStageId(), result.getContext(), CANCELLED, result.getError()));
+    var stageResult = StageExecutionResult.builder()
+      .stageName(getStageId())
+      .stageType(getStageType())
+      .context(result.getContext())
+      .status(CANCELLED)
+      .error(result.getError())
+      .build();
+
+    return completedFuture(stageResult);
   }
 }

@@ -10,7 +10,6 @@ import static org.folio.flow.model.ExecutionStatus.FAILED;
 import static org.folio.flow.model.ExecutionStatus.RECOVERED;
 import static org.folio.flow.model.ExecutionStatus.SKIPPED;
 import static org.folio.flow.model.ExecutionStatus.SUCCESS;
-import static org.folio.flow.model.StageExecutionResult.stageResult;
 import static org.folio.flow.utils.FlowUtils.FLOW_ENGINE_LOGGER_NAME;
 
 import java.lang.annotation.Annotation;
@@ -27,6 +26,7 @@ import lombok.extern.log4j.Log4j2;
 import org.folio.flow.api.AbstractStageContextWrapper;
 import org.folio.flow.api.Stage;
 import org.folio.flow.api.StageContext;
+import org.folio.flow.model.ExecutionStatus;
 import org.folio.flow.model.StageExecutionResult;
 import org.folio.flow.utils.types.Cancellable;
 import org.folio.flow.utils.types.Listenable;
@@ -38,7 +38,8 @@ import org.springframework.core.ResolvableType;
 public final class DefaultStageExecutor<T extends StageContext> implements StageExecutor {
 
   private final Stage<T> stage;
-  private final String stageName;
+  private final String stageId;
+  private final String stageType;
   private final Constructor<T> stageContextWrapperConstructor;
 
   @Getter(PACKAGE) private final boolean isListenable;
@@ -52,7 +53,8 @@ public final class DefaultStageExecutor<T extends StageContext> implements Stage
    */
   public DefaultStageExecutor(Stage<T> stage) {
     this.stage = stage;
-    this.stageName = stage.getId();
+    this.stageId = stage.getId();
+    this.stageType = "Stage";
     this.stageContextWrapperConstructor = getStageContextWrapperConstructor();
     this.isCancellable = isAnyDefaultMethodOverwritten(stage, Cancellable.class);
     this.isRecoverable = isAnyDefaultMethodOverwritten(stage, Recoverable.class);
@@ -61,7 +63,7 @@ public final class DefaultStageExecutor<T extends StageContext> implements Stage
 
   @Override
   public String getStageId() {
-    return stageName;
+    return stageId;
   }
 
   @Override
@@ -74,7 +76,7 @@ public final class DefaultStageExecutor<T extends StageContext> implements Stage
       T contextWrapper = createContextWrapper(context);
       return stage.shouldCancelIfFailed(contextWrapper);
     } catch (Exception e) {
-      log.warn("[{}] Failed to check if stage '{}' should be cancelled if failed", context.flowId(), stageName, e);
+      log.warn("[{}] Failed to check if stage '{}' should be cancelled if failed", context.flowId(), stageId, e);
       return false;
     }
   }
@@ -97,8 +99,15 @@ public final class DefaultStageExecutor<T extends StageContext> implements Stage
 
   @Override
   public CompletableFuture<StageExecutionResult> skip(StageExecutionResult upstreamResult, Executor executor) {
-    log.debug("[{}] Stage '{}' is skipped", upstreamResult.getFlowId(), stageName);
-    return completedFuture(stageResult(getStageId(), upstreamResult.getContext(), SKIPPED));
+    log.debug("[{}] Stage '{}' is skipped", upstreamResult.getFlowId(), stageId);
+    var stageResult = StageExecutionResult.builder()
+      .stageName(stageId)
+      .stageType(stageType)
+      .context(upstreamResult.getContext())
+      .status(SKIPPED)
+      .build();
+
+    return completedFuture(stageResult);
   }
 
   @Override
@@ -109,7 +118,7 @@ public final class DefaultStageExecutor<T extends StageContext> implements Stage
         .thenApply(this::applyTerminalCancellationListenableMethod);
     }
 
-    return completedFuture(stageResult(stageName, upstreamResult.getContext(), CANCELLATION_IGNORED));
+    return completedFuture(getStageResult(upstreamResult.getContext(), CANCELLATION_IGNORED));
   }
 
   private StageExecutionResult tryExecuteStage(StageExecutionResult rs) {
@@ -118,11 +127,11 @@ public final class DefaultStageExecutor<T extends StageContext> implements Stage
     try {
       var contextWrapper = createContextWrapper(context);
       stage.execute(contextWrapper);
-      log.debug("[{}] Stage '{}' executed with status: {}", flowId, stageName, SUCCESS);
-      return stageResult(stageName, contextWrapper, SUCCESS);
+      log.debug("[{}] Stage '{}' executed with status: {}", flowId, stageId, SUCCESS);
+      return getStageResult(contextWrapper, SUCCESS);
     } catch (Exception exception) {
-      log.debug("[{}] Stage '{}' executed with status: {}", flowId, stageName, FAILED);
-      return stageResult(stageName, context, FAILED, exception);
+      log.debug("[{}] Stage '{}' executed with status: {}", flowId, stageId, FAILED, exception);
+      return getStageResult(context, FAILED, exception);
     }
   }
 
@@ -135,14 +144,14 @@ public final class DefaultStageExecutor<T extends StageContext> implements Stage
     var flowId = stageContext.flowId();
 
     try {
-      log.debug("[{}] Recovering stage '{}'", flowId, stageName);
+      log.debug("[{}] Recovering stage '{}'", flowId, stageId);
       var contextWrapper = createContextWrapper(stageContext);
       stage.recover(contextWrapper);
-      log.debug("[{}] Stage '{}' is recovered", flowId, stageName);
-      return stageResult(stageName, contextWrapper, RECOVERED);
+      log.debug("[{}] Stage '{}' is recovered", flowId, stageId);
+      return getStageResult(contextWrapper, RECOVERED);
     } catch (Exception exception) {
-      log.debug("[{}] Stage '{}' recovery failed", flowId, stageName);
-      return stageResult(stageName, stageContext, FAILED, exception);
+      log.debug("[{}] Stage '{}' recovery failed", flowId, stageId);
+      return getStageResult(stageContext, FAILED, exception);
     }
   }
 
@@ -152,11 +161,11 @@ public final class DefaultStageExecutor<T extends StageContext> implements Stage
     try {
       contextWrapper = createContextWrapper(context);
       stage.cancel(contextWrapper);
-      log.debug("[{}] Stage '{}' is cancelled", result.getFlowId(), stageName);
-      return stageResult(stageName, contextWrapper, CANCELLED, result.getError());
+      log.debug("[{}] Stage '{}' is cancelled", result.getFlowId(), stageId);
+      return getStageResult(contextWrapper, CANCELLED, result.getError());
     } catch (Exception exception) {
-      log.debug("[{}] Stage '{}' cancellation failed", result.getFlowId(), stageName, exception);
-      return stageResult(stageName, contextWrapper != null ? contextWrapper : context, CANCELLATION_FAILED, exception);
+      log.debug("[{}] Stage '{}' cancellation failed", result.getFlowId(), stageId, exception);
+      return getStageResult(contextWrapper != null ? contextWrapper : context, CANCELLATION_FAILED, exception);
     }
   }
 
@@ -184,18 +193,18 @@ public final class DefaultStageExecutor<T extends StageContext> implements Stage
     try {
       contextWrapper = createContextWrapper(stageContext);
     } catch (Exception e) {
-      log.warn("[{}] Failed to create a context wrapper for listenable method in stage '{}'", flowId, stageName, e);
-      return stageResult(stageName, stageContext, ser.getStatus(), ser.getError());
+      log.warn("[{}] Failed to create a context wrapper for listenable method in stage '{}'", flowId, stageId, e);
+      return getStageResult(stageContext, ser.getStatus(), ser.getError());
     }
 
     try {
       c.accept(stage, contextWrapper);
     } catch (Exception e) {
-      log.warn("[{}] Listenable method failed in stage '{}'", flowId, stageName, e);
+      log.warn("[{}] Listenable method failed in stage '{}'", flowId, stageId, e);
     }
 
     var listenableStageContext = contextWrapper != null ? contextWrapper : stageContext;
-    return stageResult(stageName, listenableStageContext, ser.getStatus(), ser.getError());
+    return getStageResult(listenableStageContext, ser.getStatus(), ser.getError());
   }
 
   private Constructor<T> getStageContextWrapperConstructor() {
@@ -212,7 +221,7 @@ public final class DefaultStageExecutor<T extends StageContext> implements Stage
       }
       return null;
     } catch (Exception e) {
-      log.warn("Failed to find a constructor for a wrapper object in '{}'", stageName, e);
+      log.warn("Failed to find a constructor for a wrapper object in '{}'", stageId, e);
       return null;
     }
   }
@@ -256,5 +265,19 @@ public final class DefaultStageExecutor<T extends StageContext> implements Stage
     }
 
     return true;
+  }
+
+  private StageExecutionResult getStageResult(StageContext context, ExecutionStatus status) {
+    return getStageResult(context, status, null);
+  }
+
+  private StageExecutionResult getStageResult(StageContext context, ExecutionStatus status, Exception error) {
+    return StageExecutionResult.builder()
+      .stageName(stageId)
+      .stageType(stageType)
+      .context(context)
+      .status(status)
+      .error(error)
+      .build();
   }
 }

@@ -20,13 +20,16 @@ import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
 import org.awaitility.Awaitility;
+import org.folio.flow.api.DynamicStage;
 import org.folio.flow.api.Flow;
 import org.folio.flow.api.FlowEngine;
+import org.folio.flow.api.ParallelStage;
 import org.folio.flow.api.Stage;
 import org.folio.flow.api.StageContext;
 import org.folio.flow.exception.StageExecutionException;
 import org.folio.flow.model.ExecutionStatus;
 import org.folio.flow.model.FlowExecutionStrategy;
+import org.folio.flow.model.StageExecutionResult;
 import org.folio.flow.model.StageResult;
 import org.junit.jupiter.params.provider.Arguments;
 import org.mockito.invocation.InvocationOnMock;
@@ -50,8 +53,8 @@ public class FlowTestUtils {
     .executionTimeout(FIVE_SECONDS)
     .name("single-thread-flow-engine")
     .stageReportProvider(StageReportProvider.builder()
-      .template("[${flowId}] -> [${stage}] is ${statusName}")
-      .errorTemplate("[${flowId}] -> [${stage}] is ${statusName} with [${errorType}]: ${shortErrorMessage}")
+      .template("[${flowId}] -> [${stageId}] is ${statusName}")
+      .errorTemplate("[${flowId}] -> [${stageId}] is ${statusName} with [${errorType}]: ${shortErrorMessage}")
       .build())
     .lastExecutionsStatusCacheSize(10)
     .build();
@@ -113,44 +116,34 @@ public class FlowTestUtils {
   }
 
   public static StageResult stageResult(Stage<? extends StageContext> root, String name, ExecutionStatus status) {
-    return stageResult(root, name, status, null, emptyList());
+    return StageResult.builder()
+      .flowId(root.getId())
+      .stageId(name)
+      .status(status)
+      .build();
   }
 
   public static StageResult stageResult(Stage<? extends StageContext> root,
     Stage<? extends StageContext> stage, ExecutionStatus status) {
-    return stageResult(root, stage.getId(), status, null, emptyList());
-  }
-
-  public static StageResult stageResult(Stage<? extends StageContext> root,
-    String name, ExecutionStatus status, Exception err) {
-    return stageResult(root, name, status, err, emptyList());
+    return stageResult(root, stage, status, null, emptyList());
   }
 
   public static StageResult stageResult(Stage<? extends StageContext> root, Stage<? extends StageContext> stage,
     ExecutionStatus status, Exception error) {
-    return stageResult(root, stage.getId(), status, error, emptyList());
-  }
-
-  public static StageResult stageResult(Stage<? extends StageContext> root, String name,
-    ExecutionStatus status, List<StageResult> results) {
-    return stageResult(root, name, status, null, results);
+    return stageResult(root, stage, status, error, emptyList());
   }
 
   public static StageResult stageResult(Stage<? extends StageContext> root, Stage<? extends StageContext> stage,
     ExecutionStatus status, List<StageResult> results) {
-    return stageResult(root, stage.getId(), status, null, results);
+    return stageResult(root, stage, status, null, results);
   }
 
   public static StageResult stageResult(Stage<? extends StageContext> root, Stage<? extends StageContext> stage,
-    ExecutionStatus status, Exception error, List<StageResult> results) {
-    return stageResult(root, stage.getId(), status, error, results);
-  }
-
-  public static StageResult stageResult(Stage<? extends StageContext> root, String name,
     ExecutionStatus status, Exception error, List<StageResult> subResults) {
     return StageResult.builder()
       .flowId(root.getId())
-      .stageName(name)
+      .stageId(stage.getId())
+      .stageType(resolveStageType(stage))
       .status(status)
       .error(error)
       .subStageResults(subResults)
@@ -160,6 +153,14 @@ public class FlowTestUtils {
   @SneakyThrows
   public static List<StageResult> stageResults(Throwable error) {
     return ((StageExecutionException) error).getStageResults();
+  }
+
+  public static StageExecutionResult stageExecutionResult(String name, StageContext context, ExecutionStatus status) {
+    return StageExecutionResult.builder()
+      .stageName(name)
+      .status(status)
+      .context(context)
+      .build();
   }
 
   public static void executeFlow(Flow flow, FlowEngine flowEngine) {
@@ -199,5 +200,21 @@ public class FlowTestUtils {
       .atMost(duration.plus(Duration.ofMillis(250)))
       .pollDelay(duration)
       .untilAsserted(() -> assertThat(sampleResult).isPresent());
+  }
+
+  private static String resolveStageType(Stage<?> stage) {
+    if (stage instanceof Flow) {
+      return "Flow";
+    }
+
+    if (stage instanceof ParallelStage) {
+      return "ParallelStage";
+    }
+
+    if (stage instanceof DynamicStage) {
+      return "DynamicStage";
+    }
+
+    return "Stage";
   }
 }
