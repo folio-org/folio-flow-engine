@@ -1,7 +1,6 @@
 package org.folio.flow.utils;
 
 import static java.util.Collections.emptyList;
-import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.ObjectUtils.isNotEmpty;
 import static org.folio.flow.model.ExecutionStatus.CANCELLED;
 import static org.folio.flow.model.ExecutionStatus.FAILED;
@@ -149,7 +148,7 @@ public class FlowUtils {
     return stageResultList.stream()
       .map(StageResultHolder::getResult)
       .map(StageResult::from)
-      .collect(toList());
+      .toList();
   }
 
   /**

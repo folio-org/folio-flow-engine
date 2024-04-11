@@ -1,20 +1,19 @@
 package org.folio.flow.model;
 
-import static java.util.Collections.emptyList;
 import static org.folio.flow.utils.FlowUtils.convertToStageResults;
 
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.List;
 import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.RequiredArgsConstructor;
 
 @Data
 @Builder
-@RequiredArgsConstructor(access = AccessLevel.PRIVATE)
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class StageResult implements Serializable {
 
   @Serial private static final long serialVersionUID = -2351840685666223047L;
@@ -48,8 +47,7 @@ public class StageResult implements Serializable {
   /**
    * A list of internal stage results (can be empty).
    */
-  @Builder.Default
-  private final List<StageResult> subStageResults = emptyList();
+  private final List<StageResult> subStageResults;
 
   /**
    * Creates {@link StageResult} from {@link StageExecutionResult} object.

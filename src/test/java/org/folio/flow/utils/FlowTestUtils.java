@@ -120,6 +120,7 @@ public class FlowTestUtils {
       .flowId(root.getId())
       .stageId(name)
       .status(status)
+      .subStageResults(emptyList())
       .build();
   }
 

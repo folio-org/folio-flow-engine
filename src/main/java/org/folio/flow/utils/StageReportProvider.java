@@ -123,7 +123,7 @@ public class StageReportProvider {
     substitutionParameters.put("flowId", stageResult.getFlowId());
     substitutionParameters.put("stageType", stageResult.getStageType());
     substitutionParameters.put("stageId", stageResult.getStageId());
-    substitutionParameters.put("formattedStageId", stageNameFormatter.apply(stageResult.getStageId()));
+    substitutionParameters.put("formattedStageId", getFormattedStageId(stageResult));
     substitutionParameters.put("status", stageResult.getStatus().getValue());
     substitutionParameters.put("statusName", stageResult.getStatus().name());
     substitutionParameters.put("errorType", getErrorType(stageResult));
@@ -131,5 +131,14 @@ public class StageReportProvider {
     substitutionParameters.put("shortErrorMessage", getErrorMessage(stageResult, 25));
 
     return substitutionParameters;
+  }
+
+  private String getFormattedStageId(StageResult stageResult) {
+    try {
+      return stageNameFormatter.apply(stageResult.getStageId());
+    } catch (Exception exception) {
+      log.warn("Failed to prepare formattedStageId in StageReportProvider", exception);
+      return stageResult.getStageId();
+    }
   }
 }
