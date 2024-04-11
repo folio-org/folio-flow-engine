@@ -7,7 +7,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.InstanceOfAssertFactories.list;
 import static org.awaitility.Awaitility.waitAtMost;
 import static org.awaitility.Durations.FIVE_HUNDRED_MILLISECONDS;
-import static org.folio.flow.api.Flow.builder;
 import static org.folio.flow.model.ExecutionStatus.CANCELLATION_FAILED;
 import static org.folio.flow.model.ExecutionStatus.CANCELLED;
 import static org.folio.flow.model.ExecutionStatus.FAILED;
@@ -83,7 +82,7 @@ class FlowTest {
 
     @Test
     void builder_negative_idIsNull() {
-      var builder = builder();
+      var builder = Flow.builder();
       assertThatThrownBy(() -> builder.id(null))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Flow id must not be null");
@@ -91,7 +90,7 @@ class FlowTest {
 
     @Test
     void builder_negative_stageIsNull() {
-      var builder = builder();
+      var builder = Flow.builder();
       assertThatThrownBy(() -> builder.stage((Stage<StageContext>) null))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Stage must not be null");
@@ -99,7 +98,7 @@ class FlowTest {
 
     @Test
     void builder_negative_stageExecutorIsNull() {
-      var builder = builder();
+      var builder = Flow.builder();
       assertThatThrownBy(() -> builder.stage((StageExecutor) null))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Stage must not be null");
@@ -124,7 +123,7 @@ class FlowTest {
 
       when(customStageExecutor.execute(any(), any())).thenReturn(completedFuture(expectedStageResult));
 
-      var flow = builder().stage(customStageExecutor).stage(customStageExecutor).build();
+      var flow = Flow.builder().stage(customStageExecutor).stage(customStageExecutor).build();
       executeFlow(flow, SINGLE_THREAD_FLOW_ENGINE);
 
       verify(customStageExecutor, times(2)).execute(any(), any(Executor.class));
@@ -144,7 +143,7 @@ class FlowTest {
 
       when(customStageExecutor.execute(any(), any())).thenReturn(completedFuture(expectedStageResult));
 
-      var flow = builder()
+      var flow = Flow.builder()
         .id("flow-id")
         .executionStrategy(IGNORE_ON_ERROR)
         .stage(simpleStage)
@@ -177,7 +176,7 @@ class FlowTest {
 
       when(customStageExecutor.execute(any(), any())).thenReturn(completedFuture(expectedStageResult));
 
-      var flow = builder()
+      var flow = Flow.builder()
         .id("flow-id")
         .stage(simpleStage)
         .onFlowCancellation(customStageExecutor)
@@ -200,7 +199,7 @@ class FlowTest {
     void execute_positive_flowParameter() {
       mockStageNames(simpleStage);
 
-      var flow = builder()
+      var flow = Flow.builder()
         .stage(simpleStage)
         .flowParameter("k1", "v1")
         .flowParameter("k2", "v2")
@@ -216,7 +215,7 @@ class FlowTest {
     void execute_positive_flowParameters() {
       mockStageNames(simpleStage);
 
-      var flow = builder()
+      var flow = Flow.builder()
         .stage(simpleStage)
         .flowParameters(Map.of("k1", "v1"))
         .flowParameters(Map.of("k2", "v2"))
@@ -659,14 +658,14 @@ class FlowTest {
       var exception = new RuntimeException("stage error");
       doThrow(exception).when(cancellableStage).execute(any());
 
-      var subFlow = builder()
+      var subFlow = Flow.builder()
         .id("main/sub")
         .stage(cancellableStage)
         .onFlowError(simpleStage)
         .executionStrategy(IGNORE_ON_ERROR)
         .build();
 
-      var flow = builder()
+      var flow = Flow.builder()
         .id("main")
         .stage(subFlow)
         .onFlowError(simpleStage)

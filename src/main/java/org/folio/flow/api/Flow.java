@@ -1,6 +1,7 @@
 package org.folio.flow.api;
 
 import static java.util.Collections.emptyMap;
+import static java.util.stream.Collectors.toUnmodifiableMap;
 import static org.apache.commons.lang3.ObjectUtils.defaultIfNull;
 import static org.folio.flow.model.FlowExecutionStrategy.CANCEL_ON_ERROR;
 import static org.folio.flow.utils.CollectionUtils.emptyIfNull;
@@ -12,6 +13,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -294,9 +296,13 @@ public final class Flow implements Stage<StageContext> {
      * @return immutable {@link Flow} object
      */
     public Flow build() {
+      var flowParameters = defaultIfNull(this.flowParameters, emptyMap()).entrySet().stream()
+        .filter(entry -> entry.getKey() != null && entry.getValue() != null)
+        .collect(toUnmodifiableMap(Entry::getKey, Entry::getValue, (o1, o2) -> o2));
+
       return new Flow(
         defaultIfNull(this.id, "flow-" + generateRandomId()),
-        Map.copyOf(defaultIfNull(this.flowParameters, emptyMap())),
+        flowParameters,
         defaultIfNull(this.flowExecutionStrategy, CANCEL_ON_ERROR),
         List.copyOf(emptyIfNull(this.stageExecutors)),
         onFlowSkipFinalStage,

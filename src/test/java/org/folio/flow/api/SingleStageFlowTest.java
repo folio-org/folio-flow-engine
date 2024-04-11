@@ -23,6 +23,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+import java.util.HashMap;
 import org.folio.flow.api.models.CancellableTestStage;
 import org.folio.flow.api.models.CustomSimpleStage;
 import org.folio.flow.api.models.RecoverableAndCancellableTestStage;
@@ -76,6 +77,41 @@ public class SingleStageFlowTest {
     void execute_positive(FlowEngine flowEngine) {
       mockStageNames(simpleStage);
       var flow = flowForStageSequence(simpleStage);
+
+      executeFlow(flow, flowEngine);
+
+      verify(simpleStage).execute(stageContext(flow));
+      assertThat(flowEngine.getFlowStatus(flow)).isEqualTo(SUCCESS);
+    }
+
+    @ParameterizedTest(name = PARAMETERIZED_TEST_NAME)
+    @MethodSource("org.folio.flow.utils.FlowTestUtils#flowEnginesDataSource")
+    void execute_positive_nullableFlowParameter(FlowEngine flowEngine) {
+      mockStageNames(simpleStage);
+      var flow = Flow.builder()
+        .stage(simpleStage)
+        .flowParameter(null, "test")
+        .flowParameter("test", null)
+        .build();
+
+      executeFlow(flow, flowEngine);
+
+      verify(simpleStage).execute(stageContext(flow));
+      assertThat(flowEngine.getFlowStatus(flow)).isEqualTo(SUCCESS);
+    }
+
+    @ParameterizedTest(name = PARAMETERIZED_TEST_NAME)
+    @MethodSource("org.folio.flow.utils.FlowTestUtils#flowEnginesDataSource")
+    void execute_positive_nullableFlowParametersMap(FlowEngine flowEngine) {
+      mockStageNames(simpleStage);
+      var flowParameters = new HashMap<>();
+      flowParameters.put(null, 123);
+      flowParameters.put("test-key", null);
+
+      var flow = Flow.builder()
+        .stage(simpleStage)
+        .flowParameters(flowParameters)
+        .build();
 
       executeFlow(flow, flowEngine);
 
