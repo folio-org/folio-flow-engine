@@ -6,6 +6,9 @@ import static org.assertj.core.api.InstanceOfAssertFactories.list;
 import static org.folio.flow.api.Flow.builder;
 import static org.folio.flow.model.ExecutionStatus.CANCELLED;
 import static org.folio.flow.model.ExecutionStatus.FAILED;
+import static org.folio.flow.model.ExecutionStatus.SKIPPED;
+import static org.folio.flow.model.ExecutionStatus.SUCCESS;
+import static org.folio.flow.model.FlowExecutionStrategy.IGNORE_ON_ERROR;
 import static org.folio.flow.utils.FlowTestUtils.PARAMETERIZED_TEST_NAME;
 import static org.folio.flow.utils.FlowTestUtils.executeFlow;
 import static org.folio.flow.utils.FlowTestUtils.mockStageNames;
@@ -15,6 +18,7 @@ import static org.folio.flow.utils.FlowTestUtils.stageResult;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
@@ -27,6 +31,7 @@ import org.folio.flow.api.ParallelStage;
 import org.folio.flow.api.StageContext;
 import org.folio.flow.api.models.RecoverableAndCancellableTestStage;
 import org.folio.flow.exception.FlowCancelledException;
+import org.folio.flow.exception.FlowExecutionException;
 import org.folio.flow.model.StageResult;
 import org.folio.flow.support.UnitTest;
 import org.folio.flow.utils.FlowTestUtils;
@@ -213,5 +218,63 @@ public class FlowContextTransferTest {
     var subflow3ExpectedContext = StageContext.of(subflow3.getId(), subflow3Params, emptyMap());
     verify(stage4).execute(subflow3ExpectedContext);
     verify(stage4).recover(subflow3ExpectedContext);
+  }
+
+  @ParameterizedTest(name = PARAMETERIZED_TEST_NAME)
+  @MethodSource("org.folio.flow.utils.FlowTestUtils#flowEnginesDataSource")
+  void execute_positive_skippedFlowContext(FlowEngine flowEngine) {
+    mockStageNames(stage1, stage2, stage3, stage4);
+    var error = new RuntimeException("error");
+    var recoverError = new RuntimeException("Recover failed");
+
+    doThrow(error).when(stage1).execute(any());
+    doThrow(recoverError).when(stage1).recover(any());
+    doAnswer(inv -> setParameterInContext(inv, "p", "v1")).when(stage4).execute(any());
+
+    var subflow1 = Flow.builder()
+      .stage(stage1)
+      .onFlowSkip(stage3)
+      .executionStrategy(IGNORE_ON_ERROR)
+      .flowParameter("sf1", "sf1v")
+      .build();
+
+    var subflow2 = Flow.builder()
+      .stage(stage2)
+      .onFlowSkip(stage3)
+      .executionStrategy(IGNORE_ON_ERROR)
+      .flowParameter("sf2", "sf2v")
+      .build();
+
+    var mainFlow = Flow.builder()
+      .stage(stage4)
+      .stage(subflow1)
+      .stage(subflow2)
+      .onFlowSkip(stage3)
+      .flowParameter("mf", "mfv")
+      .executionStrategy(IGNORE_ON_ERROR)
+      .build();
+
+    assertThatThrownBy(() -> executeFlow(mainFlow, flowEngine))
+      .isInstanceOf(FlowExecutionException.class)
+      .hasMessage("Failed to execute flow %s, stage '%s' failed", mainFlow, subflow1)
+      .hasCause(recoverError)
+      .extracting(FlowTestUtils::stageResults, list(StageResult.class))
+      .containsExactly(
+        stageResult(mainFlow, stage4, SUCCESS),
+        stageResult(mainFlow, subflow1, FAILED, recoverError, List.of(
+          stageResult(subflow1, stage1, FAILED, recoverError))),
+        stageResult(mainFlow, subflow2, SKIPPED, error, List.of(
+          stageResult(subflow2, stage2, SKIPPED),
+          stageResult(subflow2, stage3, SUCCESS))));
+
+    verify(stage2, never()).execute(any());
+    verify(stage4).execute(StageContext.of(mainFlow.getId(), Map.of("mf", "mfv"), Map.of("p", "v1")));
+
+    var subflow1Params = Map.of("mf", "mfv", "sf1", "sf1v");
+    verify(stage1).execute(StageContext.of(subflow1.getId(), subflow1Params, Map.of("p", "v1")));
+    verify(stage1).recover(StageContext.of(subflow1.getId(), subflow1Params, Map.of("p", "v1")));
+
+    var subflow2Params = Map.of("mf", "mfv", "sf2", "sf2v");
+    verify(stage3).execute(StageContext.of(subflow2.getId(), subflow2Params, Map.of("p", "v1")));
   }
 }

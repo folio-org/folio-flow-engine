@@ -90,7 +90,7 @@ public class FlowExecutor implements StageExecutor {
     var skippedStagesDeque = new ExecutionDeque();
     var stageExecutors = flow.getStages();
 
-    var future = completedFuture(upstreamResult);
+    var future = completedFuture(createInitialFlowResult(upstreamResult));
     for (var stageExecutor : stageExecutors) {
       future = future
         .thenComposeAsync(ser -> stageExecutor.skip(ser.withFlowId(getStageId()), executor), executor)
