@@ -67,6 +67,12 @@ public final class StageContextImpl implements StageContext {
   }
 
   @Override
+  public StageContext remove(Object key) {
+    data.remove(key);
+    return this;
+  }
+
+  @Override
   public <T> T get(Object key) {
     //noinspection unchecked
     return (T) data.get(key);

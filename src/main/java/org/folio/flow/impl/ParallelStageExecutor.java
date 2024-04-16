@@ -8,7 +8,6 @@ import static org.folio.flow.model.ExecutionStatus.CANCELLED;
 import static org.folio.flow.model.ExecutionStatus.FAILED;
 import static org.folio.flow.model.ExecutionStatus.SKIPPED;
 import static org.folio.flow.model.ExecutionStatus.SUCCESS;
-import static org.folio.flow.model.StageExecutionResult.stageResult;
 import static org.folio.flow.utils.FlowUtils.FLOW_ENGINE_LOGGER_NAME;
 import static org.folio.flow.utils.FlowUtils.findFirstValue;
 import static org.folio.flow.utils.StageUtils.cancelStageAsync;
@@ -42,6 +41,11 @@ public final class ParallelStageExecutor implements StageExecutor {
   @Override
   public String getStageId() {
     return parallelStage.getId();
+  }
+
+  @Override
+  public String getStageType() {
+    return "ParallelStage";
   }
 
   @Override
@@ -106,9 +110,14 @@ public final class ParallelStageExecutor implements StageExecutor {
     ParallelStageResult psr, ExecutionStatus finalStatus) {
     var upstreamFlowId = upstreamResult.getFlowId();
     var upstreamFlowParameters = upstreamResult.getContext().flowParameters();
-    var stageContext = StageContext.of(upstreamFlowId, upstreamFlowParameters, psr.contextData());
-    var error = findFirstValue(psr.errors()).orElse(null);
-    return stageResult(getStageId(), stageContext, finalStatus, error, psr.executedStages());
+    return StageExecutionResult.builder()
+      .stageName(getStageId())
+      .stageType(getStageType())
+      .context(StageContext.of(upstreamFlowId, upstreamFlowParameters, psr.contextData()))
+      .status(finalStatus)
+      .error(findFirstValue(psr.errors()).orElse(null))
+      .executedStages(psr.executedStages())
+      .build();
   }
 
   private static ParallelStageResult composeToParallelStageResult(List<StageExecutor> executors,

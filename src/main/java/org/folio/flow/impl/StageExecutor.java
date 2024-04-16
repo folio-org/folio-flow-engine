@@ -40,6 +40,15 @@ public interface StageExecutor {
   CompletableFuture<StageExecutionResult> cancel(StageExecutionResult upstreamResult, Executor executor);
 
   /**
+   * Returns stage type as string, it is used by {@link org.folio.flow.utils.StageReportProvider} class.
+   *
+   * @return stage as {@link String} object
+   */
+  default String getStageType() {
+    return "Stage";
+  }
+
+  /**
    * Returns stage name.
    *
    * @return stage name as {@link String} object

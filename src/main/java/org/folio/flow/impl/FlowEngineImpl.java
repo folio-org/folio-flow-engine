@@ -12,7 +12,6 @@ import static org.folio.flow.model.ExecutionStatus.FAILED;
 import static org.folio.flow.model.ExecutionStatus.IN_PROGRESS;
 import static org.folio.flow.model.ExecutionStatus.SUCCESS;
 import static org.folio.flow.model.ExecutionStatus.UNKNOWN;
-import static org.folio.flow.model.StageExecutionResult.stageResult;
 import static org.folio.flow.utils.FlowUtils.FLOW_ENGINE_LOGGER_NAME;
 import static org.folio.flow.utils.FlowUtils.convertToStageResults;
 import static org.folio.flow.utils.FlowUtils.getLastFailedStageWithAnyStatusOf;
@@ -134,7 +133,12 @@ public final class FlowEngineImpl implements FlowEngine {
 
   private static StageExecutionResult getInitialStageExecutionResult(Flow flow) {
     var stageContext = StageContext.of(flow.getId(), flow.getFlowParameters(), new HashMap<>());
-    return stageResult(flow.getId(), stageContext, SUCCESS);
+    return StageExecutionResult.builder()
+      .stageName(flow.getId())
+      .stageType("Flow")
+      .context(stageContext)
+      .status(SUCCESS)
+      .build();
   }
 
   private void handleExecutionException(String flowId, ExecutionException exception) {

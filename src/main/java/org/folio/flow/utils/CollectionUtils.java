@@ -13,6 +13,6 @@ public class CollectionUtils {
   }
 
   public static <T> List<T> emptyIfNull(final List<T> list) {
-    return list == null ? Collections.<T>emptyList() : list;
+    return list == null ? Collections.emptyList() : list;
   }
 }

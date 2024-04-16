@@ -6,14 +6,14 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.util.List;
 import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.RequiredArgsConstructor;
 
 @Data
 @Builder
-@RequiredArgsConstructor(access = AccessLevel.PRIVATE)
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class StageResult implements Serializable {
 
   @Serial private static final long serialVersionUID = -2351840685666223047L;
@@ -26,7 +26,12 @@ public class StageResult implements Serializable {
   /**
    * Stage name.
    */
-  private final String stageName;
+  private final String stageId;
+
+  /**
+   * Stage type.
+   */
+  private final String stageType;
 
   /**
    * Stage execution status.
@@ -54,6 +59,7 @@ public class StageResult implements Serializable {
     return new StageResult(
       stageExecutionResult.getFlowId(),
       stageExecutionResult.getStageName(),
+      stageExecutionResult.getStageType(),
       stageExecutionResult.getStatus(),
       stageExecutionResult.getError(),
       convertToStageResults(stageExecutionResult.getExecutedStages())

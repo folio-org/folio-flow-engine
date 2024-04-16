@@ -1,7 +1,6 @@
 package org.folio.flow.api;
 
 import static java.util.stream.Collectors.toList;
-import static java.util.stream.Collectors.toUnmodifiableList;
 import static org.folio.flow.utils.CollectionUtils.emptyIfNull;
 import static org.folio.flow.utils.FlowUtils.generateRandomId;
 import static org.folio.flow.utils.FlowUtils.getStageExecutor;
@@ -18,8 +17,9 @@ import org.folio.flow.utils.FlowUtils;
 
 @Data
 @RequiredArgsConstructor
+@SuppressWarnings("ClassCanBeRecord")
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-public final class ParallelStage implements Stage {
+public final class ParallelStage implements Stage<StageContext> {
 
   /**
    * Parallel stage identifier.
@@ -42,7 +42,8 @@ public final class ParallelStage implements Stage {
    * @param stages - array of {@link Stage} objects as varargs.
    * @return created {@link ParallelStage} object
    */
-  public static ParallelStage of(Stage... stages) {
+  @SafeVarargs
+  public static ParallelStage of(Stage<? extends StageContext>... stages) {
     return ParallelStage.of(null, List.of(stages));
   }
 
@@ -53,7 +54,8 @@ public final class ParallelStage implements Stage {
    * @param stages - array of {@link Stage} objects as varargs.
    * @return created {@link ParallelStage} object
    */
-  public static ParallelStage of(String id, Stage... stages) {
+  @SafeVarargs
+  public static ParallelStage of(String id, Stage<? extends StageContext>... stages) {
     return ParallelStage.of(getParallelStageId(id), List.of(stages));
   }
 
@@ -63,7 +65,7 @@ public final class ParallelStage implements Stage {
    * @param stages - {@link List} with {@link Stage} objects
    * @return created {@link ParallelStage} object
    */
-  public static ParallelStage of(List<? extends Stage> stages) {
+  public static ParallelStage of(List<? extends Stage<? extends StageContext>> stages) {
     return ParallelStage.of(null, stages);
   }
 
@@ -73,10 +75,10 @@ public final class ParallelStage implements Stage {
    * @param stages - {@link List} with {@link Stage} objects
    * @return created {@link ParallelStage} object
    */
-  public static ParallelStage of(String id, List<? extends Stage> stages) {
+  public static ParallelStage of(String id, List<? extends Stage<? extends StageContext>> stages) {
     var stageExecutors = stages.stream()
       .map(FlowUtils::getStageExecutor)
-      .collect(toUnmodifiableList());
+      .toList();
 
     return new ParallelStage(getParallelStageId(id), stageExecutors, true);
   }
@@ -146,7 +148,7 @@ public final class ParallelStage implements Stage {
      * @param stage - {@link Stage} object
      * @return reference to the current {@link ParallelStageBuilder} object
      */
-    public ParallelStageBuilder stage(Stage stage) {
+    public ParallelStageBuilder stage(Stage<? extends StageContext> stage) {
       requireNonNull(stage, "Stage must not be null");
       if (stageExecutors == null) {
         this.stageExecutors = new ArrayList<>();
@@ -178,7 +180,7 @@ public final class ParallelStage implements Stage {
      * @param stage - {@link Stage} object
      * @return reference to the current {@link ParallelStageBuilder} object
      */
-    public ParallelStageBuilder stages(List<Stage> stage) {
+    public ParallelStageBuilder stages(List<Stage<? extends StageContext>> stage) {
       this.stageExecutors = requireNonNull(stage, "Stages must not be null").stream()
         .map(FlowUtils::getStageExecutor)
         .collect(toList());

@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.StringJoiner;
+import java.util.function.Function;
 import lombok.Builder;
 import lombok.extern.log4j.Log4j2;
 import org.apache.logging.log4j.core.lookup.StrSubstitutor;
@@ -17,9 +18,9 @@ import org.folio.flow.model.StageResult;
 @Log4j2(topic = FLOW_ENGINE_LOGGER_NAME)
 public class StageReportProvider {
 
-  private static final String DEFAULT_TEMPLATE = "-> ${stage} |> ${statusName}";
+  private static final String DEFAULT_TEMPLATE = "-> ${stageType}: ${formattedStageId} |> ${statusName}";
   private static final String ERROR_DEFAULT_TEMPLATE =
-    "-> ${stage} |> ${statusName} with [${errorType}]: ${shortErrorMessage}";
+    "-> ${stageType}: ${formattedStageId} |> ${statusName} with [${errorType}]: ${errorMessage}";
 
   /**
    * Initial intend level.
@@ -44,6 +45,12 @@ public class StageReportProvider {
    */
   @Builder.Default
   private final String errorTemplate = ERROR_DEFAULT_TEMPLATE;
+
+  /**
+   * Stage name modifier.
+   */
+  @Builder.Default
+  private final Function<String, String> stageNameFormatter = Function.identity();
 
   /**
    * Creates a report string for list with stage results.
@@ -105,14 +112,18 @@ public class StageReportProvider {
       return errorMessage;
     }
 
-    return errorMessage.substring(0, Math.min(errorMessage.length(), maxLength));
+    return errorMessage
+      .replaceAll("\\s+", " ")
+      .substring(0, Math.min(errorMessage.length(), maxLength));
   }
 
-  private static Map<String, String> getSubstitutionParameters(StageResult stageResult) {
+  private Map<String, String> getSubstitutionParameters(StageResult stageResult) {
     var substitutionParameters = new HashMap<String, String>();
 
     substitutionParameters.put("flowId", stageResult.getFlowId());
-    substitutionParameters.put("stage", stageResult.getStageName());
+    substitutionParameters.put("stageType", stageResult.getStageType());
+    substitutionParameters.put("stageId", stageResult.getStageId());
+    substitutionParameters.put("formattedStageId", getFormattedStageId(stageResult));
     substitutionParameters.put("status", stageResult.getStatus().getValue());
     substitutionParameters.put("statusName", stageResult.getStatus().name());
     substitutionParameters.put("errorType", getErrorType(stageResult));
@@ -120,5 +131,14 @@ public class StageReportProvider {
     substitutionParameters.put("shortErrorMessage", getErrorMessage(stageResult, 25));
 
     return substitutionParameters;
+  }
+
+  private String getFormattedStageId(StageResult stageResult) {
+    try {
+      return stageNameFormatter.apply(stageResult.getStageId());
+    } catch (Exception exception) {
+      log.warn("Failed to prepare formattedStageId in StageReportProvider", exception);
+      return stageResult.getStageId();
+    }
   }
 }

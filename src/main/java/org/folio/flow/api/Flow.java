@@ -1,6 +1,7 @@
 package org.folio.flow.api;
 
 import static java.util.Collections.emptyMap;
+import static java.util.stream.Collectors.toUnmodifiableMap;
 import static org.apache.commons.lang3.ObjectUtils.defaultIfNull;
 import static org.folio.flow.model.FlowExecutionStrategy.CANCEL_ON_ERROR;
 import static org.folio.flow.utils.CollectionUtils.emptyIfNull;
@@ -12,6 +13,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -23,7 +25,7 @@ import org.folio.flow.utils.FlowUtils;
 @Data
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-public final class Flow implements Stage {
+public final class Flow implements Stage<StageContext> {
 
   /**
    * Flow identifier.
@@ -126,7 +128,7 @@ public final class Flow implements Stage {
      * @param stage - {@link Stage} object
      * @return reference to the current {@link FlowBuilder} object
      */
-    public FlowBuilder stage(Stage stage) {
+    public FlowBuilder stage(Stage<? extends StageContext> stage) {
       requireNonNull(stage, "Stage must not be null");
       if (stageExecutors == null) {
         this.stageExecutors = new ArrayList<>();
@@ -201,7 +203,7 @@ public final class Flow implements Stage {
      * @param stage - a {@link Stage} to execute if flow finished with error
      * @return reference to the current {@link FlowBuilder} object
      */
-    public FlowBuilder onFlowError(Stage stage) {
+    public FlowBuilder onFlowError(Stage<? extends StageContext> stage) {
       requireNonNull(stage, "onFlowError stage must not be null");
       this.onFlowErrorFinalStage = getStageExecutor(stage);
       return this;
@@ -224,7 +226,7 @@ public final class Flow implements Stage {
      * @param stage - a {@link Stage} to execute if flow cancelled
      * @return reference to the current {@link FlowBuilder} object
      */
-    public FlowBuilder onFlowCancellation(Stage stage) {
+    public FlowBuilder onFlowCancellation(Stage<? extends StageContext> stage) {
       requireNonNull(stage, "onFlowCancellation stage must not be null");
       this.onFlowCancellationFinalStage = getStageExecutor(stage);
       return this;
@@ -248,7 +250,7 @@ public final class Flow implements Stage {
      * @param stage - a {@link Stage} to execute if flow is failed to cancel
      * @return reference to the current {@link FlowBuilder} object
      */
-    public FlowBuilder onFlowCancellationError(Stage stage) {
+    public FlowBuilder onFlowCancellationError(Stage<? extends StageContext> stage) {
       requireNonNull(stage, "onFlowCancellationError stage must not be null");
       this.onFlowCancellationErrorFinalStage = getStageExecutor(stage);
       return this;
@@ -271,7 +273,7 @@ public final class Flow implements Stage {
      * @param stage - a {@link Stage} to execute if flow is skipped
      * @return reference to the current {@link FlowBuilder} object
      */
-    public FlowBuilder onFlowSkip(Stage stage) {
+    public FlowBuilder onFlowSkip(Stage<? extends StageContext> stage) {
       requireNonNull(stage, "onFlowSkipError stage must not be null");
       this.onFlowSkipFinalStage = getStageExecutor(stage);
       return this;
@@ -294,9 +296,13 @@ public final class Flow implements Stage {
      * @return immutable {@link Flow} object
      */
     public Flow build() {
+      var flowParameters = defaultIfNull(this.flowParameters, emptyMap()).entrySet().stream()
+        .filter(entry -> entry.getKey() != null && entry.getValue() != null)
+        .collect(toUnmodifiableMap(Entry::getKey, Entry::getValue, (o1, o2) -> o2));
+
       return new Flow(
         defaultIfNull(this.id, "flow-" + generateRandomId()),
-        Map.copyOf(defaultIfNull(this.flowParameters, emptyMap())),
+        flowParameters,
         defaultIfNull(this.flowExecutionStrategy, CANCEL_ON_ERROR),
         List.copyOf(emptyIfNull(this.stageExecutors)),
         onFlowSkipFinalStage,

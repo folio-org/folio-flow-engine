@@ -4,7 +4,7 @@ import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-public class NoOpStage implements Stage {
+public class NoOpStage implements Stage<StageContext> {
 
   /**
    * {@inheritDoc}

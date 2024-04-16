@@ -8,19 +8,20 @@ import lombok.RequiredArgsConstructor;
 
 @Getter
 @RequiredArgsConstructor
-public final class DynamicStage implements Stage {
+@SuppressWarnings("ClassCanBeRecord")
+public final class DynamicStage implements Stage<StageContext> {
 
-  private final String name;
-  private final Function<StageContext, Stage> stageProvider;
+  private final String id;
+  private final Function<StageContext, Stage<? extends StageContext>> stageProvider;
 
   /**
    * Creates dynamic stage from {@link StageContext} using stageProvider function.
    *
-   * @param stageProvider - stage provider as {@link Function}
+   * @param provider - stage provider as {@link Function}
    * @return {@link DynamicStage} object
    */
-  public static DynamicStage of(Function<StageContext, Stage> stageProvider) {
-    return new DynamicStage("dynamic-stage-" + generateRandomId(), stageProvider);
+  public static DynamicStage of(Function<StageContext, Stage<? extends StageContext>> provider) {
+    return new DynamicStage("dynamic-stage-" + generateRandomId(), provider);
   }
 
   /**
@@ -29,8 +30,8 @@ public final class DynamicStage implements Stage {
    * @param stageProvider - stage provider as {@link Function}
    * @return {@link DynamicStage} object
    */
-  public static DynamicStage of(String name, Function<StageContext, Stage> stageProvider) {
-    return new DynamicStage(name, stageProvider);
+  public static DynamicStage of(String id, Function<StageContext, Stage<? extends StageContext>> stageProvider) {
+    return new DynamicStage(id, stageProvider);
   }
 
   @Override
@@ -40,6 +41,6 @@ public final class DynamicStage implements Stage {
 
   @Override
   public String toString() {
-    return this.name;
+    return this.id;
   }
 }

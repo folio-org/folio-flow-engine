@@ -26,6 +26,7 @@ import java.util.List;
 import org.folio.flow.api.FlowEngine;
 import org.folio.flow.api.ParallelStage;
 import org.folio.flow.api.Stage;
+import org.folio.flow.api.StageContext;
 import org.folio.flow.api.models.CancellableTestStage;
 import org.folio.flow.api.models.RecoverableAndCancellableTestStage;
 import org.folio.flow.api.models.RecoverableTestStage;
@@ -47,9 +48,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 public class ParallelStageExecutorTest {
 
-  @Mock private Stage simpleStage;
-  @Mock private Stage simpleStage1;
-  @Mock private Stage simpleStage2;
+  @Mock private Stage<StageContext> simpleStage;
+  @Mock private Stage<StageContext> simpleStage1;
+  @Mock private Stage<StageContext> simpleStage2;
   @Mock private RecoverableTestStage recoverableStage;
   @Mock private CancellableTestStage cancellableStage;
   @Mock private CancellableTestStage cancellableStage1;
@@ -232,7 +233,7 @@ public class ParallelStageExecutorTest {
         .hasCause(exception)
         .extracting(FlowTestUtils::stageResults, list(StageResult.class))
         .containsExactly(
-          stageResult(flow, parallelStage.getId(), FAILED, exception, List.of(
+          stageResult(flow, parallelStage, FAILED, exception, List.of(
             stageResult(flow, simpleStage, FAILED, exception),
             stageResult(flow, recoverableStage, SUCCESS),
             stageResult(flow, cancellableStage, SUCCESS))));
@@ -301,7 +302,7 @@ public class ParallelStageExecutorTest {
               stageResult(parFlow2, simpleStage1, FAILED, exception),
               stageResult(parFlow2, cancellableStage1, SKIPPED))),
 
-            stageResult(flow, parFlow3.getId(), SUCCESS, List.of(
+            stageResult(flow, parFlow3, SUCCESS, List.of(
               stageResult(parFlow3, simpleStage2, SUCCESS),
               stageResult(parFlow3, cancellableStage2, SUCCESS)))
           )));

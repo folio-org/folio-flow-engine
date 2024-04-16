@@ -56,6 +56,7 @@ public class StageUtils {
     StageExecutionResult upstreamResult, StageExecutionResult ser, StageExecutor stage) {
     return StageExecutionResult.builder()
       .stageName(stage.getStageId())
+      .stageType(ser.getStageType())
       .context(upstreamResult.getContext().withFlowId(flowId))
       .status(ser.getStatus())
       .error(ser.getError())
