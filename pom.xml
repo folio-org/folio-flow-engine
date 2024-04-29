@@ -29,7 +29,7 @@
     <maven-resource-plugin.version>3.3.1</maven-resource-plugin.version>
     <maven-release-plugin.version>3.0.1</maven-release-plugin.version>
     <build-helper-maven-plugin.version>3.5.0</build-helper-maven-plugin.version>
-    <maven-source-plugin.version>2.1.2</maven-source-plugin.version>
+    <maven-source-plugin.version>3.3.1</maven-source-plugin.version>
 
     <mockito-junit-jupiter.version>5.11.0</mockito-junit-jupiter.version>
     <assertj-core.version>3.25.3</assertj-core.version>
