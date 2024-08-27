@@ -23,9 +23,9 @@
     <log4j2-core.version>2.23.1</log4j2-core.version>
 
     <maven-compiler-plugin.version>3.13.0</maven-compiler-plugin.version>
-    <maven-checkstyle-plugin.version>3.4.0</maven-checkstyle-plugin.version>
+    <maven-checkstyle-plugin.version>3.5.0</maven-checkstyle-plugin.version>
     <folio-java-checkstyle.version>1.0.1</folio-java-checkstyle.version>
-    <maven-surefire-plugin.version>3.3.1</maven-surefire-plugin.version>
+    <maven-surefire-plugin.version>3.4.0</maven-surefire-plugin.version>
     <maven-resource-plugin.version>3.3.1</maven-resource-plugin.version>
     <maven-release-plugin.version>3.1.1</maven-release-plugin.version>
     <build-helper-maven-plugin.version>3.5.0</build-helper-maven-plugin.version>
@@ -60,7 +60,7 @@
     <dependency>
       <groupId>org.springframework</groupId>
       <artifactId>spring-core</artifactId>
-      <version>6.1.11</version>
+      <version>6.1.12</version>
     </dependency>
 
     <!--    test dependencies-->
@@ -133,7 +133,7 @@
           <dependency>
             <groupId>com.puppycrawl.tools</groupId>
             <artifactId>checkstyle</artifactId>
-            <version>10.17.0</version>
+            <version>10.18.0</version>
           </dependency>
           <dependency>
             <groupId>org.folio</groupId>
