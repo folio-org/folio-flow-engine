@@ -19,13 +19,13 @@
     <java.version>17</java.version>
     <folio-backend-testing.version>1.0.0</folio-backend-testing.version>
     <lombok.version>1.18.34</lombok.version>
-    <commons-lang3.version>3.16.0</commons-lang3.version>
+    <commons-lang3.version>3.17.0</commons-lang3.version>
     <log4j2-core.version>2.23.1</log4j2-core.version>
 
     <maven-compiler-plugin.version>3.13.0</maven-compiler-plugin.version>
     <maven-checkstyle-plugin.version>3.5.0</maven-checkstyle-plugin.version>
     <folio-java-checkstyle.version>1.0.1</folio-java-checkstyle.version>
-    <maven-surefire-plugin.version>3.4.0</maven-surefire-plugin.version>
+    <maven-surefire-plugin.version>3.5.0</maven-surefire-plugin.version>
     <maven-resource-plugin.version>3.3.1</maven-resource-plugin.version>
     <maven-release-plugin.version>3.1.1</maven-release-plugin.version>
     <build-helper-maven-plugin.version>3.5.0</build-helper-maven-plugin.version>
@@ -133,7 +133,7 @@
           <dependency>
             <groupId>com.puppycrawl.tools</groupId>
             <artifactId>checkstyle</artifactId>
-            <version>10.18.0</version>
+            <version>10.18.1</version>
           </dependency>
           <dependency>
             <groupId>org.folio</groupId>
