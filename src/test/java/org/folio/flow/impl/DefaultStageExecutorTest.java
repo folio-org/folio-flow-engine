@@ -45,7 +45,7 @@ class DefaultStageExecutorTest {
   }
 
   @Test
-  void execute_negative_contextPassed() throws Exception {
+  void execute_negative_contextPassed() {
     var contextAttributeVal = new AtomicReference<Object>();
     var stageExecutor = new DefaultStageExecutor<>(new Stage<StageContext>() {
       @Override
@@ -54,6 +54,7 @@ class DefaultStageExecutorTest {
         throw new RuntimeException("Testing");
       }
 
+      @Override
       public void onError(StageContext context, Exception exception) {
         contextAttributeVal.set(context.get("customkey"));
       }
