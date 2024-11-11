@@ -126,6 +126,7 @@ public final class DefaultStageExecutor<T extends StageContext> implements Stage
     var flowId = context.flowId();
     try {
       var contextWrapper = createContextWrapper(context);
+      context = contextWrapper;
       stage.execute(contextWrapper);
       log.debug("[{}] Stage '{}' executed with status: {}", flowId, stageId, SUCCESS);
       return getStageResult(contextWrapper, SUCCESS);

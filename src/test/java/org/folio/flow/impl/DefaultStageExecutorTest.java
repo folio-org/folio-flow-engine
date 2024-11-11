@@ -12,6 +12,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import org.folio.flow.api.AbstractStageContextWrapper;
 import org.folio.flow.api.Stage;
 import org.folio.flow.api.StageContext;
@@ -41,6 +42,28 @@ class DefaultStageExecutorTest {
   void tearDown() {
     verifyNoMoreInteractions(invalidSimpleStage, invalidSimpleStage2,
       falseCancellableStage, invalidListenableStage, invalidCancellableStage);
+  }
+
+  @Test
+  void execute_negative_contextPassed() {
+    var contextAttributeVal = new AtomicReference<Object>();
+    var stageExecutor = new DefaultStageExecutor<>(new Stage<StageContext>() {
+      @Override
+      public void execute(StageContext context) {
+        context.put("customkey", "customval");
+        throw new RuntimeException("Testing");
+      }
+
+      @Override
+      public void onError(StageContext context, Exception exception) {
+        contextAttributeVal.set(context.get("customkey"));
+      }
+    });
+    var stageContext = stageContext();
+    var upstreamStageResult = stageExecutionResult("test", stageContext, SUCCESS);
+
+    stageExecutor.execute(upstreamStageResult, newSingleThreadExecutor());
+    assertThat(contextAttributeVal.get()).isEqualTo("customval");
   }
 
   @Test
