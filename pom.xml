@@ -60,7 +60,7 @@
     <dependency>
       <groupId>org.springframework</groupId>
       <artifactId>spring-core</artifactId>
-      <version>6.2.2</version>
+      <version>6.2.3</version>
     </dependency>
 
     <!--    test dependencies-->
@@ -133,7 +133,7 @@
           <dependency>
             <groupId>com.puppycrawl.tools</groupId>
             <artifactId>checkstyle</artifactId>
-            <version>10.21.1</version>
+            <version>10.21.2</version>
           </dependency>
           <dependency>
             <groupId>org.folio</groupId>
