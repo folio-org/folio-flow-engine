@@ -22,7 +22,7 @@
     <commons-lang3.version>3.17.0</commons-lang3.version>
     <log4j2-core.version>2.24.3</log4j2-core.version>
 
-    <maven-compiler-plugin.version>3.13.0</maven-compiler-plugin.version>
+    <maven-compiler-plugin.version>3.14.0</maven-compiler-plugin.version>
     <maven-checkstyle-plugin.version>3.6.0</maven-checkstyle-plugin.version>
     <folio-java-checkstyle.version>1.0.1</folio-java-checkstyle.version>
     <maven-surefire-plugin.version>3.5.2</maven-surefire-plugin.version>
@@ -133,7 +133,7 @@
           <dependency>
             <groupId>com.puppycrawl.tools</groupId>
             <artifactId>checkstyle</artifactId>
-            <version>10.21.2</version>
+            <version>10.21.3</version>
           </dependency>
           <dependency>
             <groupId>org.folio</groupId>
