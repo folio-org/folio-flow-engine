@@ -5,7 +5,7 @@
   <groupId>org.folio</groupId>
   <name>folio-flow-engine</name>
   <artifactId>folio-flow-engine</artifactId>
-  <version>3.0.0</version>
+  <version>3.0.1-SNAPSHOT</version>
 
   <licenses>
     <license>
