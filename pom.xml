@@ -31,7 +31,7 @@
     <maven-source-plugin.version>3.3.1</maven-source-plugin.version>
 
     <mockito-junit-jupiter.version>5.18.0</mockito-junit-jupiter.version>
-    <assertj-core.version>3.27.3</assertj-core.version>
+    <assertj-core.version>3.27.4</assertj-core.version>
     <junit-jupiter.version>5.13.4</junit-jupiter.version>
     <awaitility.version>4.3.0</awaitility.version>
   </properties>
