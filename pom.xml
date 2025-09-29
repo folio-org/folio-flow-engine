@@ -18,10 +18,10 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <java.version>17</java.version>
     <lombok.version>1.18.42</lombok.version>
-    <commons-lang3.version>3.17.0</commons-lang3.version>
-    <log4j2-core.version>2.25.1</log4j2-core.version>
+    <commons-lang3.version>3.19.0</commons-lang3.version>
+    <log4j2-core.version>2.25.2</log4j2-core.version>
 
-    <maven-compiler-plugin.version>3.14.0</maven-compiler-plugin.version>
+    <maven-compiler-plugin.version>3.14.1</maven-compiler-plugin.version>
     <maven-checkstyle-plugin.version>3.6.0</maven-checkstyle-plugin.version>
     <folio-java-checkstyle.version>1.1.0</folio-java-checkstyle.version>
     <maven-surefire-plugin.version>3.5.4</maven-surefire-plugin.version>
@@ -132,7 +132,7 @@
           <dependency>
             <groupId>com.puppycrawl.tools</groupId>
             <artifactId>checkstyle</artifactId>
-            <version>11.0.1</version>
+            <version>11.1.0</version>
           </dependency>
           <dependency>
             <groupId>org.folio</groupId>
