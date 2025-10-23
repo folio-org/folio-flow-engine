@@ -8,6 +8,7 @@ import static org.folio.flow.utils.FlowUtils.requireNonNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Executor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +36,11 @@ public final class ParallelStage implements Stage<StageContext> {
    * Defines if stage must be cancelled even it's failed.
    */
   private final boolean shouldCancelIfFailed;
+
+  /**
+   * Optional custom executor for this parallel stage.
+   */
+  private final Executor customExecutor;
 
   /**
    * Creates {@link ParallelStage} object from an arbitrary number of {@link Stage} objects.
@@ -72,6 +78,7 @@ public final class ParallelStage implements Stage<StageContext> {
   /**
    * Creates {@link ParallelStage} object from a list of {@link Stage} objects.
    *
+   * @param id - stage identifier
    * @param stages - {@link List} with {@link Stage} objects
    * @return created {@link ParallelStage} object
    */
@@ -80,7 +87,24 @@ public final class ParallelStage implements Stage<StageContext> {
       .map(FlowUtils::getStageExecutor)
       .toList();
 
-    return new ParallelStage(getParallelStageId(id), stageExecutors, true);
+    return new ParallelStage(getParallelStageId(id), stageExecutors, true, null);
+  }
+
+  /**
+   * Creates {@link ParallelStage} object from a list of {@link Stage} objects with a custom executor.
+   *
+   * @param id - stage identifier
+   * @param stages - {@link List} with {@link Stage} objects
+   * @param customExecutor - custom {@link Executor} for parallel execution
+   * @return created {@link ParallelStage} object
+   */
+  public static ParallelStage of(String id, List<? extends Stage<? extends StageContext>> stages,
+    Executor customExecutor) {
+    var stageExecutors = stages.stream()
+      .map(FlowUtils::getStageExecutor)
+      .toList();
+
+    return new ParallelStage(getParallelStageId(id), stageExecutors, true, customExecutor);
   }
 
   @Override
@@ -129,6 +153,7 @@ public final class ParallelStage implements Stage<StageContext> {
     private String id;
     private List<StageExecutor> stageExecutors;
     private boolean shouldCancelIfFailed = true;
+    private Executor customExecutor;
 
     /**
      * Sets the id for flow. If it is not specified, it will be generated.
@@ -194,6 +219,17 @@ public final class ParallelStage implements Stage<StageContext> {
     }
 
     /**
+     * Sets a custom executor for parallel execution.
+     *
+     * @param customExecutor - custom {@link Executor} for parallel stage execution
+     * @return reference to the current {@link ParallelStageBuilder} object
+     */
+    public ParallelStageBuilder executor(Executor customExecutor) {
+      this.customExecutor = customExecutor;
+      return this;
+    }
+
+    /**
      * Creates a {@link Flow} object from builder.
      *
      * @return immutable {@link Flow} object
@@ -202,7 +238,8 @@ public final class ParallelStage implements Stage<StageContext> {
       return new ParallelStage(
         getParallelStageId(this.id),
         List.copyOf(emptyIfNull(this.stageExecutors)),
-        shouldCancelIfFailed);
+        shouldCancelIfFailed,
+        customExecutor);
     }
   }
 }
