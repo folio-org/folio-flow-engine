@@ -57,10 +57,11 @@ public final class ParallelStageExecutor implements StageExecutor {
   public CompletableFuture<StageExecutionResult> execute(StageExecutionResult upstreamResult, Executor executor) {
     log.debug("[{}] Executing stages in parallel: {}", upstreamResult::getFlowId, this::getStageNames);
 
+    var effectiveExecutor = getEffectiveExecutor(executor);
     var initialFuture = completedFuture(upstreamResult);
     var executors = parallelStage.getStages();
     var completableFutures = executors.stream()
-      .map(stage -> initialFuture.thenComposeAsync(ser -> stage.execute(ser, executor), executor))
+      .map(stage -> initialFuture.thenComposeAsync(ser -> stage.execute(ser, effectiveExecutor), effectiveExecutor))
       .collect(toList());
 
     return executeInParallelAsync(completableFutures, executors)
@@ -71,10 +72,11 @@ public final class ParallelStageExecutor implements StageExecutor {
   public CompletableFuture<StageExecutionResult> skip(StageExecutionResult upstreamResult, Executor executor) {
     log.debug("[{}] Skipping parallel stages: {}", upstreamResult::getFlowId, this::getStageNames);
 
+    var effectiveExecutor = getEffectiveExecutor(executor);
     var initialFuture = completedFuture(upstreamResult);
     var stageExecutors = parallelStage.getStages();
     var skipFutures = stageExecutors.stream()
-      .map(stage -> initialFuture.thenComposeAsync(ser -> stage.skip(ser, executor), executor))
+      .map(stage -> initialFuture.thenComposeAsync(ser -> stage.skip(ser, effectiveExecutor), effectiveExecutor))
       .collect(toList());
 
     return executeInParallelAsync(skipFutures, stageExecutors)
@@ -85,6 +87,7 @@ public final class ParallelStageExecutor implements StageExecutor {
   public CompletableFuture<StageExecutionResult> cancel(StageExecutionResult upstreamResult, Executor executor) {
     log.debug("[{}] Cancelling parallel stages: {}", upstreamResult::getFlowId, this::getStageNames);
 
+    var effectiveExecutor = getEffectiveExecutor(executor);
     var flowId = upstreamResult.getFlowId();
     var initialFuture = completedFuture(upstreamResult);
     var executedStages = upstreamResult.getExecutedStages();
@@ -93,7 +96,8 @@ public final class ParallelStageExecutor implements StageExecutor {
       .collect(Collectors.toList());
 
     var cancellationCompletableFuture = executedStages.stream()
-      .map(stage -> initialFuture.thenComposeAsync(ser -> cancelStageAsync(flowId, stage, ser, executor), executor))
+      .map(stage -> initialFuture.thenComposeAsync(ser -> cancelStageAsync(flowId, stage, ser, effectiveExecutor),
+        effectiveExecutor))
       .collect(toList());
 
     return executeInParallelAsync(cancellationCompletableFuture, stageExecutors)
@@ -136,6 +140,11 @@ public final class ParallelStageExecutor implements StageExecutor {
     return parallelStage.getStages().stream()
       .map(StageExecutor::getStageId)
       .collect(toList());
+  }
+
+  private Executor getEffectiveExecutor(Executor defaultExecutor) {
+    var customExecutor = parallelStage.getCustomExecutor();
+    return customExecutor != null ? customExecutor : defaultExecutor;
   }
 
   private record ParallelStageResult(
