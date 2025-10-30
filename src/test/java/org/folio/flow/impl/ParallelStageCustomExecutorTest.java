@@ -35,9 +35,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class ParallelStageCustomExecutorTest {
 
-  @Mock private Stage<StageContext> simpleStage1;
-  @Mock private Stage<StageContext> simpleStage2;
-  @Mock private Stage<StageContext> simpleStage3;
+  @Mock
+  private Stage<StageContext> simpleStage1;
+  @Mock
+  private Stage<StageContext> simpleStage2;
+  @Mock
+  private Stage<StageContext> simpleStage3;
 
   @AfterEach
   void tearDown() {
@@ -107,7 +110,7 @@ class ParallelStageCustomExecutorTest {
 
     var customExecutor = Executors.newFixedThreadPool(2, r -> {
       var thread = new Thread(r);
-      thread.setName("custom-executor-thread-" + thread.getId());
+      thread.setName("custom-executor-thread-" + thread.getName());
       return thread;
     });
 
@@ -246,11 +249,6 @@ class ParallelStageCustomExecutorTest {
   private Stage<StageContext> createThreadCapturingStage(Set<String> threadNames) {
     return context -> {
       threadNames.add(Thread.currentThread().getName());
-      try {
-        Thread.sleep(10); //NOSONAR
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-      }
     };
   }
 
@@ -261,14 +259,7 @@ class ParallelStageCustomExecutorTest {
       executionCounts.incrementAndGet();
 
       maxConcurrency.updateAndGet(max -> Math.max(max, current));
-
-      try {
-        Thread.sleep(50); //NOSONAR
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-      } finally {
-        currentConcurrency.decrementAndGet();
-      }
+      currentConcurrency.decrementAndGet();
     };
   }
 }
