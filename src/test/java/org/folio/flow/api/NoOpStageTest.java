@@ -28,4 +28,21 @@ class NoOpStageTest {
     NoOpStage.noOpStage().execute(stageContext);
     assertThat(stageContext.data()).isEqualTo(emptyMap());
   }
+
+  @Test
+  void getId_positive() {
+    assertThat(NoOpStage.getInstance().getId()).hasToString("no-op-stage");
+  }
+
+  @Test
+  void toString_positive() {
+    assertThat(NoOpStage.getInstance().toString()).hasToString("no-op-stage");
+  }
+
+  @Test
+  void singletonPattern_positive() {
+    var instance1 = NoOpStage.getInstance();
+    var instance2 = NoOpStage.noOpStage();
+    assertThat(instance1).isSameAs(instance2);
+  }
 }
