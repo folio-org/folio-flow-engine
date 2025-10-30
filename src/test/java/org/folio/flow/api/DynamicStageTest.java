@@ -39,7 +39,7 @@ class DynamicStageTest {
   void toString_positive() {
     var stageId = "test-dynamic-stage";
     var stage = DynamicStage.of(stageId, ctx -> new TestStage());
-    assertThat(stage.toString()).isEqualTo(stageId);
+    assertThat(stage.toString()).hasToString(stageId);
   }
 
   @Test

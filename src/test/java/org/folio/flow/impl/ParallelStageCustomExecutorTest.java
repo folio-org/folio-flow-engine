@@ -33,7 +33,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @UnitTest
 @ExtendWith(MockitoExtension.class)
-public class ParallelStageCustomExecutorTest {
+class ParallelStageCustomExecutorTest {
 
   @Mock private Stage<StageContext> simpleStage1;
   @Mock private Stage<StageContext> simpleStage2;
@@ -247,7 +247,7 @@ public class ParallelStageCustomExecutorTest {
     return context -> {
       threadNames.add(Thread.currentThread().getName());
       try {
-        Thread.sleep(10);
+        Thread.sleep(10); //NOSONAR
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
       }
@@ -263,7 +263,7 @@ public class ParallelStageCustomExecutorTest {
       maxConcurrency.updateAndGet(max -> Math.max(max, current));
 
       try {
-        Thread.sleep(50);
+        Thread.sleep(50); //NOSONAR
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
       } finally {

@@ -71,8 +71,9 @@ class StageReportProviderTest {
       .build();
 
     var report = provider.create(List.of(parentStage));
-    assertThat(report).contains("-> Flow: parent-stage |> SUCCESS");
-    assertThat(report).contains("-> Stage: sub-stage-1 |> SUCCESS");
+    assertThat(report)
+      .contains("-> Flow: parent-stage |> SUCCESS")
+      .contains("-> Stage: sub-stage-1 |> SUCCESS");
   }
 
   @Test

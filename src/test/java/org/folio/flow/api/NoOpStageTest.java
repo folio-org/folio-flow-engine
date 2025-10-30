@@ -31,12 +31,12 @@ class NoOpStageTest {
 
   @Test
   void getId_positive() {
-    assertThat(NoOpStage.getInstance().getId()).isEqualTo("no-op-stage");
+    assertThat(NoOpStage.getInstance().getId()).hasToString("no-op-stage");
   }
 
   @Test
   void toString_positive() {
-    assertThat(NoOpStage.getInstance().toString()).isEqualTo("no-op-stage");
+    assertThat(NoOpStage.getInstance().toString()).hasToString("no-op-stage");
   }
 
   @Test
