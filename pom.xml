@@ -23,13 +23,13 @@
 
     <maven-compiler-plugin.version>3.14.1</maven-compiler-plugin.version>
     <maven-checkstyle-plugin.version>3.6.0</maven-checkstyle-plugin.version>
-    <folio-java-checkstyle.version>1.1.0</folio-java-checkstyle.version>
+    <folio-java-checkstyle.version>1.2.0</folio-java-checkstyle.version>
     <maven-surefire-plugin.version>3.5.4</maven-surefire-plugin.version>
     <maven-resource-plugin.version>3.3.1</maven-resource-plugin.version>
-    <maven-release-plugin.version>3.1.1</maven-release-plugin.version>
+    <maven-release-plugin.version>3.2.0</maven-release-plugin.version>
     <build-helper-maven-plugin.version>3.5.0</build-helper-maven-plugin.version>
     <maven-source-plugin.version>3.3.1</maven-source-plugin.version>
-    <jacoco-maven-plugin.version>0.8.12</jacoco-maven-plugin.version>
+    <jacoco-maven-plugin.version>0.8.14</jacoco-maven-plugin.version>
 
     <mockito-junit-jupiter.version>5.20.0</mockito-junit-jupiter.version>
     <assertj-core.version>3.27.6</assertj-core.version>
