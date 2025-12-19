@@ -19,7 +19,7 @@
     <java.version>17</java.version>
     <lombok.version>1.18.42</lombok.version>
     <commons-lang3.version>3.19.0</commons-lang3.version>
-    <log4j2-core.version>2.25.2</log4j2-core.version>
+    <log4j2-core.version>2.25.3</log4j2-core.version>
 
     <maven-compiler-plugin.version>3.14.1</maven-compiler-plugin.version>
     <maven-checkstyle-plugin.version>3.6.0</maven-checkstyle-plugin.version>
