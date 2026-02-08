@@ -21,7 +21,7 @@
     <commons-lang3.version>3.19.0</commons-lang3.version>
     <log4j2-core.version>2.25.3</log4j2-core.version>
 
-    <maven-compiler-plugin.version>3.14.1</maven-compiler-plugin.version>
+    <maven-compiler-plugin.version>3.15.0</maven-compiler-plugin.version>
     <maven-checkstyle-plugin.version>3.6.0</maven-checkstyle-plugin.version>
     <folio-java-checkstyle.version>1.1.0</folio-java-checkstyle.version>
     <maven-surefire-plugin.version>3.5.4</maven-surefire-plugin.version>
