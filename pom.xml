@@ -25,7 +25,7 @@
     <maven-checkstyle-plugin.version>3.6.0</maven-checkstyle-plugin.version>
     <folio-java-checkstyle.version>1.1.0</folio-java-checkstyle.version>
     <maven-surefire-plugin.version>3.5.5</maven-surefire-plugin.version>
-    <maven-resource-plugin.version>3.4.0</maven-resource-plugin.version>
+    <maven-resource-plugin.version>3.5.0</maven-resource-plugin.version>
     <maven-release-plugin.version>3.3.1</maven-release-plugin.version>
     <build-helper-maven-plugin.version>3.5.0</build-helper-maven-plugin.version>
     <maven-source-plugin.version>3.4.0</maven-source-plugin.version>
