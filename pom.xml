@@ -18,7 +18,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <java.version>17</java.version>
     <lombok.version>1.18.48</lombok.version>
-    <commons-lang3.version>3.21.0</commons-lang3.version>
+    <commons-lang3.version>3.22.0</commons-lang3.version>
     <log4j2-core.version>2.26.1</log4j2-core.version>
 
     <maven-compiler-plugin.version>3.16.0</maven-compiler-plugin.version>
@@ -60,7 +60,7 @@
     <dependency>
       <groupId>org.springframework</groupId>
       <artifactId>spring-core</artifactId>
-      <version>7.0.10</version>
+      <version>7.1.0</version>
     </dependency>
 
     <!--    test dependencies-->
